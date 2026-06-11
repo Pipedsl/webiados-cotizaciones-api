@@ -26,6 +26,9 @@ public class Quote {
     @Column(name = "clave_hash", nullable = false)
     private String claveHash;
 
+    @Column(name = "clave_texto", length = 64)
+    private String claveTexto;
+
     @Column(name = "client_name", nullable = false)
     private String clientName;
 
@@ -54,11 +57,12 @@ public class Quote {
     protected Quote() {
     }
 
-    public Quote(UUID id, String codigo, String claveHash, String clientName,
+    public Quote(UUID id, String codigo, String claveHash, String claveTexto, String clientName,
                  String clientEmail, String notes, Instant createdAt, Instant expiresAt) {
         this.id = id;
         this.codigo = codigo;
         this.claveHash = claveHash;
+        this.claveTexto = claveTexto;
         this.clientName = clientName;
         this.clientEmail = clientEmail;
         this.notes = notes;
@@ -102,6 +106,10 @@ public class Quote {
 
     public String getClaveHash() {
         return claveHash;
+    }
+
+    public String getClaveTexto() {
+        return claveTexto;
     }
 
     public String getClientName() {

@@ -61,6 +61,7 @@ public class QuoteMapper {
         return new QuoteAdminDetail(
                 quote.getId(),
                 quote.getCodigo(),
+                quote.getClaveTexto(),
                 quote.getClientName(),
                 quote.getClientEmail(),
                 quote.getNotes(),

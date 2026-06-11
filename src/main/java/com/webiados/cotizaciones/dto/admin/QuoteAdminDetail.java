@@ -10,6 +10,7 @@ import java.util.UUID;
 public record QuoteAdminDetail(
         UUID id,
         String codigo,
+        String claveTexto,
         String clientName,
         String clientEmail,
         String notes,

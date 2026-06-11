@@ -54,7 +54,7 @@ public class QuoteService {
         Instant now = Instant.now();
         Instant expiresAt = now.plus(props.quote().validityDays(), ChronoUnit.DAYS);
 
-        var quote = new Quote(UUID.randomUUID(), codigo, claveHash,
+        var quote = new Quote(UUID.randomUUID(), codigo, claveHash, clave,
                 req.clientName(), req.clientEmail(), req.notes(), now, expiresAt);
 
         int index = 0;
