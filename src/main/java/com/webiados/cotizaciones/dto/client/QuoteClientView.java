@@ -10,6 +10,9 @@ public record QuoteClientView(
         boolean isExpired,
         Instant expiresAt,
         UUID selectedOptionId,
+        String titulo,
+        String mensaje,
+        String imagenes,
         List<OptionClientView> options
 ) {
 }

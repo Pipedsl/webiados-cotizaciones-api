@@ -50,6 +50,15 @@ public class Quote {
     @Column(name = "selected_at")
     private Instant selectedAt;
 
+    @Column(length = 200)
+    private String titulo;
+
+    @Column(columnDefinition = "text")
+    private String mensaje;
+
+    @Column(columnDefinition = "text")
+    private String imagenes;
+
     @OneToMany(mappedBy = "quote", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("orderIndex ASC")
     private List<QuoteOption> options = new ArrayList<>();
@@ -68,6 +77,15 @@ public class Quote {
         this.notes = notes;
         this.createdAt = createdAt;
         this.expiresAt = expiresAt;
+    }
+
+    public Quote(UUID id, String codigo, String claveHash, String claveTexto, String clientName,
+                 String clientEmail, String notes, Instant createdAt, Instant expiresAt,
+                 String titulo, String mensaje, String imagenes) {
+        this(id, codigo, claveHash, claveTexto, clientName, clientEmail, notes, createdAt, expiresAt);
+        this.titulo = titulo;
+        this.mensaje = mensaje;
+        this.imagenes = imagenes;
     }
 
     public void addOption(QuoteOption option) {
@@ -142,5 +160,17 @@ public class Quote {
 
     public List<QuoteOption> getOptions() {
         return options;
+    }
+
+    public String getTitulo() {
+        return titulo;
+    }
+
+    public String getMensaje() {
+        return mensaje;
+    }
+
+    public String getImagenes() {
+        return imagenes;
     }
 }

@@ -26,6 +26,9 @@ public class QuoteMapper {
                 quote.isExpired(now),
                 quote.getExpiresAt(),
                 quote.getSelectedOptionId(),
+                quote.getTitulo(),
+                quote.getMensaje(),
+                quote.getImagenes(),
                 options
         );
     }
@@ -65,6 +68,9 @@ public class QuoteMapper {
                 quote.getClientName(),
                 quote.getClientEmail(),
                 quote.getNotes(),
+                quote.getTitulo(),
+                quote.getMensaje(),
+                quote.getImagenes(),
                 quote.statusAt(now),
                 quote.canSelect(now),
                 quote.getCreatedAt(),

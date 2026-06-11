@@ -10,6 +10,9 @@ public record CreateQuoteRequest(
         @NotBlank String clientName,
         String clientEmail,
         String notes,
+        String titulo,
+        String mensaje,
+        String imagenes,
         @NotEmpty @Valid List<OptionRequest> options
 ) {
 }
