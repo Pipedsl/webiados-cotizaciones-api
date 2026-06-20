@@ -8,6 +8,7 @@ import com.webiados.cotizaciones.dto.admin.CreateQuoteResponse;
 import com.webiados.cotizaciones.dto.admin.OptionRequest;
 import com.webiados.cotizaciones.dto.admin.QuoteAdminDetail;
 import com.webiados.cotizaciones.dto.admin.QuoteAdminSummary;
+import com.webiados.cotizaciones.dto.admin.UpdateQuoteRequest;
 import com.webiados.cotizaciones.dto.client.QuoteClientView;
 import com.webiados.cotizaciones.repo.QuoteRepository;
 import com.webiados.cotizaciones.repo.SelectionRepository;
@@ -93,12 +94,45 @@ public class QuoteService {
         return mapper.toDetail(quote, history, Instant.now());
     }
 
+    @Transactional
+    public QuoteAdminDetail updateQuote(UUID id, UpdateQuoteRequest req) {
+        var quote = quoteRepo.findWithOptionsById(id)
+                .orElseThrow(() -> new NoSuchElementException("Cotización no encontrada"));
+        quote.updateMeta(req.titulo(), req.mensaje(), req.notes(), req.expiresAt());
+        var history = selectionRepo.findByQuoteIdOrderByCreatedAtAsc(id);
+        return mapper.toDetail(quote, history, Instant.now());
+    }
+
+    @Transactional
+    public QuoteAdminDetail updateOption(UUID quoteId, UUID optionId, OptionRequest req) {
+        var quote = quoteRepo.findWithOptionsById(quoteId)
+                .orElseThrow(() -> new NoSuchElementException("Cotización no encontrada"));
+        var option = quote.getOptions().stream()
+                .filter(o -> o.getId().equals(optionId))
+                .findFirst()
+                .orElseThrow(() -> new NoSuchElementException("Opción no encontrada"));
+        option.update(req.titulo(), req.descripcion(), req.precio(),
+                req.currency(), req.recomendado(), req.features());
+        var history = selectionRepo.findByQuoteIdOrderByCreatedAtAsc(quoteId);
+        return mapper.toDetail(quote, history, Instant.now());
+    }
+
+    @Transactional
+    public void deleteOption(UUID quoteId, UUID optionId) {
+        var quote = quoteRepo.findWithOptionsById(quoteId)
+                .orElseThrow(() -> new NoSuchElementException("Cotización no encontrada"));
+        boolean removed = quote.getOptions().removeIf(o -> o.getId().equals(optionId));
+        if (!removed) throw new NoSuchElementException("Opción no encontrada");
+    }
+
     public Quote findByCodigo(String codigo) {
         return quoteRepo.findByCodigo(codigo)
                 .orElseThrow(() -> new NoSuchElementException("Cotización no encontrada"));
     }
 
-    public QuoteClientView toClientView(Quote quote) {
+    public QuoteClientView getClientViewByCodigo(String codigo) {
+        var quote = quoteRepo.findByCodigo(codigo)
+                .orElseThrow(() -> new NoSuchElementException("Cotización no encontrada"));
         return mapper.toClientView(quote, Instant.now());
     }
 }

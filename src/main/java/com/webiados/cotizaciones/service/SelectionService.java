@@ -1,6 +1,5 @@
 package com.webiados.cotizaciones.service;
 
-import com.webiados.cotizaciones.domain.Quote;
 import com.webiados.cotizaciones.domain.QuoteOption;
 import com.webiados.cotizaciones.domain.Selection;
 import com.webiados.cotizaciones.domain.SelectionKind;
@@ -35,8 +34,11 @@ public class SelectionService {
     }
 
     @Transactional
-    public QuoteClientView select(Quote quote, UUID optionId) {
+    public QuoteClientView select(String codigo, UUID optionId) {
         Instant now = Instant.now();
+
+        var quote = quoteRepo.findByCodigo(codigo)
+                .orElseThrow(() -> new NoSuchElementException("Cotización no encontrada"));
 
         if (!quote.canSelect(now)) {
             throw new IllegalStateException("Esta cotización ha expirado");

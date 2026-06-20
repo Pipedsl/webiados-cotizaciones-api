@@ -10,10 +10,10 @@ import java.util.UUID;
 
 public interface QuoteRepository extends JpaRepository<Quote, UUID> {
 
-    @EntityGraph(attributePaths = {"options", "options.features"})
+    @EntityGraph(attributePaths = {"options"})
     Optional<Quote> findByCodigo(String codigo);
 
-    @EntityGraph(attributePaths = {"options", "options.features"})
+    @EntityGraph(attributePaths = {"options"})
     Optional<Quote> findWithOptionsById(UUID id);
 
     boolean existsByCodigo(String codigo);

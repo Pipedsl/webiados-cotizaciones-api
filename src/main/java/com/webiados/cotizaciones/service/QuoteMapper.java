@@ -91,7 +91,7 @@ public class QuoteMapper {
                 opt.getPrecio(),
                 opt.getCurrency(),
                 opt.isRecomendado(),
-                opt.getFeatures()
+                List.copyOf(opt.getFeatures())
         );
     }
 }

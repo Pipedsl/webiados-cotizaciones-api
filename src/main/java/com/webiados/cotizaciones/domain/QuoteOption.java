@@ -106,4 +106,15 @@ public class QuoteOption {
     public List<String> getFeatures() {
         return features;
     }
+
+    public void update(String titulo, String descripcion, BigDecimal precio,
+                       String currency, boolean recomendado, List<String> features) {
+        this.titulo = titulo;
+        this.descripcion = descripcion;
+        this.precio = precio;
+        this.currency = currency != null ? currency : "CLP";
+        this.recomendado = recomendado;
+        this.features.clear();
+        if (features != null) this.features.addAll(features);
+    }
 }

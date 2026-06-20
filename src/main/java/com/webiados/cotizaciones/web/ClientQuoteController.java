@@ -51,13 +51,12 @@ public class ClientQuoteController {
         try {
             // Buscamos el quote; si no existe lanzamos mismo 401 que clave mala
             var quote = quoteService.findByCodigo(codigo);
-            rateLimiter.record(rateLimitKey);
             String token = authService.clientUnlock(codigo, req.clave(), quote.getClaveHash());
             rateLimiter.reset(rateLimitKey); // éxito: resetear contador
             return ResponseEntity.ok(new TokenResponse(token));
         } catch (Exception ex) {
             // Mismo 401 para "no existe" y "clave mala" para no filtrar existencia
-            rateLimiter.record(rateLimitKey);
+            rateLimiter.record(rateLimitKey); // un solo registro por intento fallido
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
@@ -67,8 +66,7 @@ public class ClientQuoteController {
     public ResponseEntity<QuoteClientView> get(@PathVariable String codigo,
                                                @AuthenticationPrincipal JwtPrincipal principal) {
         validateCodigo(codigo, principal);
-        var quote = quoteService.findByCodigo(codigo);
-        return ResponseEntity.ok(quoteService.toClientView(quote));
+        return ResponseEntity.ok(quoteService.getClientViewByCodigo(codigo));
     }
 
     @PostMapping("/{codigo}/select")
@@ -77,8 +75,7 @@ public class ClientQuoteController {
                                                   @Valid @RequestBody SelectRequest req,
                                                   @AuthenticationPrincipal JwtPrincipal principal) {
         validateCodigo(codigo, principal);
-        var quote = quoteService.findByCodigo(codigo);
-        return ResponseEntity.ok(selectionService.select(quote, req.optionId()));
+        return ResponseEntity.ok(selectionService.select(codigo, req.optionId()));
     }
 
     private void validateCodigo(String codigo, JwtPrincipal principal) {

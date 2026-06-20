@@ -114,6 +114,15 @@ public class Quote {
         this.selectedAt = when;
     }
 
+    public void updateMeta(String titulo, String mensaje, String notes, Instant expiresAt) {
+        this.titulo = titulo;
+        this.mensaje = mensaje;
+        this.notes = notes;
+        if (expiresAt != null) {
+            this.expiresAt = expiresAt;
+        }
+    }
+
     public UUID getId() {
         return id;
     }
