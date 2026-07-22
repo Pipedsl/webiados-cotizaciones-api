@@ -1,6 +1,7 @@
 package com.webiados.cotizaciones.config;
 
 import com.webiados.cotizaciones.security.JwtAuthFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -32,6 +33,15 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/problem+json");
+                            response.setCharacterEncoding("UTF-8");
+                            response.getWriter().write(
+                                    "{\"type\":\"about:blank\",\"title\":\"No autenticado\",\"status\":401,\"detail\":\"Token ausente o inválido\"}");
+                        })
+                )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/admin/auth/login").permitAll()
