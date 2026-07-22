@@ -37,6 +37,7 @@ public class SecurityConfig {
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                             response.setContentType("application/problem+json");
+                            response.setCharacterEncoding("UTF-8");
                             response.getWriter().write(
                                     "{\"type\":\"about:blank\",\"title\":\"No autenticado\",\"status\":401,\"detail\":\"Token ausente o inválido\"}");
                         })
