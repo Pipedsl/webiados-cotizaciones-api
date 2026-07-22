@@ -50,6 +50,15 @@ app:
     unlock-max-attempts: ${RATELIMIT_UNLOCK_MAX:5}
     unlock-window-minutes: ${RATELIMIT_UNLOCK_WINDOW:10}
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
 logging:
   level:
     org.flywaydb: INFO
