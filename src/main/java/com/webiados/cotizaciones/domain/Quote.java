@@ -3,11 +3,15 @@ package com.webiados.cotizaciones.domain;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +20,9 @@ import java.util.UUID;
 @Entity
 @Table(name = "quote")
 public class Quote {
+
+    /** IVA chileno. Regla del repo: el IVA es 19% y el dinero no se redondea a la ligera. */
+    public static final int IVA_PCT_CHILE = 19;
 
     @Id
     private UUID id;
@@ -49,6 +56,21 @@ public class Quote {
 
     @Column(name = "selected_at")
     private Instant selectedAt;
+
+    /** Estado persistido. Nunca vale EXPIRED: eso se deriva en {@link #statusAt}. */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 16)
+    private QuoteStatus status = QuoteStatus.PENDING;
+
+    @Column(name = "sent_at")
+    private Instant sentAt;
+
+    @Column(name = "rejected_at")
+    private Instant rejectedAt;
+
+    /** Porcentaje de IVA vigente al emitir. Se guarda para que el histórico no cambie. */
+    @Column(name = "iva_pct", nullable = false)
+    private int ivaPct = IVA_PCT_CHILE;
 
     @Column(length = 200)
     private String titulo;
@@ -102,25 +124,114 @@ public class Quote {
         return selectedOptionId != null || !now.isAfter(expiresAt);
     }
 
+    /**
+     * Estado efectivo. SELECTED y REJECTED son definitivos; PENDING y SENT caducan.
+     */
     public QuoteStatus statusAt(Instant now) {
-        if (selectedOptionId != null) {
-            return QuoteStatus.SELECTED;
+        if (status == QuoteStatus.SELECTED || status == QuoteStatus.REJECTED) {
+            return status;
         }
-        return now.isAfter(expiresAt) ? QuoteStatus.EXPIRED : QuoteStatus.PENDING;
+        return now.isAfter(expiresAt) ? QuoteStatus.EXPIRED : status;
+    }
+
+    /**
+     * Marca la cotización como enviada al cliente.
+     *
+     * <p>Reenviar no pisa la fecha original: {@code sentAt} es <em>la primera vez</em> que
+     * salió, y es el dato con el que se calcula la tasa de cierre.
+     */
+    public void markSent(Instant when) {
+        if (status == QuoteStatus.SELECTED || status == QuoteStatus.REJECTED) {
+            throw new IllegalStateException(
+                    "La cotización ya fue respondida por el cliente; no se puede volver a marcar como enviada");
+        }
+        this.status = QuoteStatus.SENT;
+        if (this.sentAt == null) {
+            this.sentAt = when;
+        }
+    }
+
+    /**
+     * Registra una entrega hecha fuera del sistema, con su fecha real.
+     *
+     * <p>A diferencia de {@link #markSent}, acá la fecha <em>sí</em> se fija: sirve para
+     * cargar el histórico —cotizaciones que se mandaron en PDF a mano— sin falsear el
+     * día en que salieron. También se puede usar sobre una cotización ya aceptada: el
+     * cliente respondió, así que evidentemente la recibió.
+     */
+    public void recordManualDelivery(Instant when) {
+        if (when == null) {
+            throw new IllegalArgumentException("Falta la fecha de envío");
+        }
+        if (when.isBefore(createdAt)) {
+            throw new IllegalArgumentException(
+                    "La fecha de envío no puede ser anterior a la creación de la cotización");
+        }
+        this.sentAt = when;
+        if (status == QuoteStatus.PENDING) {
+            this.status = QuoteStatus.SENT;
+        }
+    }
+
+    public void markRejected(Instant when) {
+        if (status == QuoteStatus.SELECTED) {
+            throw new IllegalStateException(
+                    "La cotización ya fue aceptada; no se puede marcar como rechazada");
+        }
+        this.status = QuoteStatus.REJECTED;
+        this.rejectedAt = when;
     }
 
     public void recordSelection(UUID optionId, Instant when) {
         this.selectedOptionId = optionId;
         this.selectedAt = when;
+        this.status = QuoteStatus.SELECTED;
+        this.rejectedAt = null;
     }
 
-    public void updateMeta(String titulo, String mensaje, String notes, Instant expiresAt) {
-        this.titulo = titulo;
-        this.mensaje = mensaje;
-        this.notes = notes;
+    /**
+     * Actualización parcial: un campo en {@code null} significa "no lo toques", no
+     * "bórralo". Antes esto asignaba directo y un PATCH parcial borraba en silencio el
+     * título y el mensaje.
+     */
+    public void updateMeta(String titulo, String mensaje, String notes, String imagenes,
+                           Instant expiresAt) {
+        if (titulo != null) {
+            this.titulo = titulo;
+        }
+        if (mensaje != null) {
+            this.mensaje = mensaje;
+        }
+        if (notes != null) {
+            this.notes = notes;
+        }
+        if (imagenes != null) {
+            this.imagenes = imagenes;
+        }
         if (expiresAt != null) {
             this.expiresAt = expiresAt;
         }
+    }
+
+    // --- Dinero -------------------------------------------------------------------
+    // El IVA se calcula, no se guarda: guardar neto, IVA y total por separado es
+    // invitar a que se contradigan. Lo que se guarda es el porcentaje aplicado.
+
+    /** IVA correspondiente a un monto neto, redondeado a peso entero. */
+    public BigDecimal ivaSobre(BigDecimal neto) {
+        if (neto == null) {
+            return null;
+        }
+        return neto.multiply(BigDecimal.valueOf(ivaPct))
+                .divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);
+    }
+
+    /** Neto + IVA, en pesos enteros (CLP no tiene decimales). */
+    public BigDecimal totalConIva(BigDecimal neto) {
+        if (neto == null) {
+            return null;
+        }
+        return neto.setScale(0, RoundingMode.HALF_UP).add(ivaSobre(neto));
     }
 
     public UUID getId() {
@@ -165,6 +276,23 @@ public class Quote {
 
     public Instant getSelectedAt() {
         return selectedAt;
+    }
+
+    /** Estado crudo persistido. Para mostrar al usuario usa {@link #statusAt(Instant)}. */
+    public QuoteStatus getStatus() {
+        return status;
+    }
+
+    public Instant getSentAt() {
+        return sentAt;
+    }
+
+    public Instant getRejectedAt() {
+        return rejectedAt;
+    }
+
+    public int getIvaPct() {
+        return ivaPct;
     }
 
     public List<QuoteOption> getOptions() {

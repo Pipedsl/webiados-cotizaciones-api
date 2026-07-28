@@ -36,8 +36,16 @@ public class QuoteOption {
     @Column(columnDefinition = "text")
     private String descripcion;
 
+    /** Precio de instalación / desarrollo. Pago único. Neto, sin IVA. */
     @Column(nullable = false, precision = 14, scale = 2)
     private BigDecimal precio;
+
+    /**
+     * Precio recurrente mensual, neto y sin IVA. {@code null} = esta opción no tiene
+     * mensualidad (distinto de 0, que sería una mensualidad gratuita explícita).
+     */
+    @Column(name = "precio_mensual", precision = 14, scale = 2)
+    private BigDecimal precioMensual;
 
     @Column(nullable = false, length = 3)
     private String currency = "CLP";
@@ -55,13 +63,14 @@ public class QuoteOption {
     }
 
     public QuoteOption(UUID id, int orderIndex, String titulo, String descripcion,
-                       BigDecimal precio, String currency, boolean recomendado,
-                       List<String> features) {
+                       BigDecimal precio, BigDecimal precioMensual, String currency,
+                       boolean recomendado, List<String> features) {
         this.id = id;
         this.orderIndex = orderIndex;
         this.titulo = titulo;
         this.descripcion = descripcion;
         this.precio = precio;
+        this.precioMensual = precioMensual;
         this.currency = currency != null ? currency : "CLP";
         this.recomendado = recomendado;
         this.features = features != null ? new ArrayList<>(features) : new ArrayList<>();
@@ -95,6 +104,14 @@ public class QuoteOption {
         return precio;
     }
 
+    public BigDecimal getPrecioMensual() {
+        return precioMensual;
+    }
+
+    public void setOrderIndex(int orderIndex) {
+        this.orderIndex = orderIndex;
+    }
+
     public String getCurrency() {
         return currency;
     }
@@ -108,10 +125,12 @@ public class QuoteOption {
     }
 
     public void update(String titulo, String descripcion, BigDecimal precio,
-                       String currency, boolean recomendado, List<String> features) {
+                       BigDecimal precioMensual, String currency, boolean recomendado,
+                       List<String> features) {
         this.titulo = titulo;
         this.descripcion = descripcion;
         this.precio = precio;
+        this.precioMensual = precioMensual;
         this.currency = currency != null ? currency : "CLP";
         this.recomendado = recomendado;
         this.features.clear();

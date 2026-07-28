@@ -13,6 +13,7 @@ public record QuoteClientView(
         String titulo,
         String mensaje,
         String imagenes,
+        int ivaPct,
         List<OptionClientView> options
 ) {
 }

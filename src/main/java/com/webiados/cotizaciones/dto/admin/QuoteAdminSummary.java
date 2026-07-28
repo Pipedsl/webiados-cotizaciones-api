@@ -14,6 +14,8 @@ public record QuoteAdminSummary(
         String selectedOptionTitulo,
         Instant createdAt,
         Instant expiresAt,
-        Instant selectedAt
+        Instant sentAt,
+        Instant selectedAt,
+        Instant rejectedAt
 ) {
 }

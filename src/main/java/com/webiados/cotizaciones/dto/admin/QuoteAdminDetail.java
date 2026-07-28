@@ -21,8 +21,11 @@ public record QuoteAdminDetail(
         boolean canSelect,
         Instant createdAt,
         Instant expiresAt,
+        Instant sentAt,
         UUID selectedOptionId,
         Instant selectedAt,
+        Instant rejectedAt,
+        int ivaPct,
         List<OptionClientView> options,
         List<SelectionHistoryEntry> history
 ) {

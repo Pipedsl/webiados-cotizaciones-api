@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 public class QuoteMapper {
 
     public QuoteClientView toClientView(Quote quote, Instant now) {
-        var options = quote.getOptions().stream().map(this::toOptionView).toList();
+        var options = quote.getOptions().stream().map(o -> toOptionView(quote, o)).toList();
         return new QuoteClientView(
                 quote.getClientName(),
                 quote.canSelect(now),
@@ -29,6 +29,7 @@ public class QuoteMapper {
                 quote.getTitulo(),
                 quote.getMensaje(),
                 quote.getImagenes(),
+                quote.getIvaPct(),
                 options
         );
     }
@@ -46,12 +47,14 @@ public class QuoteMapper {
                 selectedTitulo,
                 quote.getCreatedAt(),
                 quote.getExpiresAt(),
-                quote.getSelectedAt()
+                quote.getSentAt(),
+                quote.getSelectedAt(),
+                quote.getRejectedAt()
         );
     }
 
     public QuoteAdminDetail toDetail(Quote quote, List<Selection> history, Instant now) {
-        var options = quote.getOptions().stream().map(this::toOptionView).toList();
+        var options = quote.getOptions().stream().map(o -> toOptionView(quote, o)).toList();
         var optionMap = quote.getOptions().stream()
                 .collect(Collectors.toMap(o -> o.getId().toString(), QuoteOption::getTitulo));
         var historyEntries = history.stream().map(s -> new SelectionHistoryEntry(
@@ -75,21 +78,34 @@ public class QuoteMapper {
                 quote.canSelect(now),
                 quote.getCreatedAt(),
                 quote.getExpiresAt(),
+                quote.getSentAt(),
                 quote.getSelectedOptionId(),
                 quote.getSelectedAt(),
+                quote.getRejectedAt(),
+                quote.getIvaPct(),
                 options,
                 historyEntries
         );
     }
 
-    OptionClientView toOptionView(QuoteOption opt) {
+    /**
+     * El IVA se calcula acá, con el porcentaje que trae la cotización, y viaja desglosado.
+     * El frontend no calcula impuestos y el histórico conserva la tasa con la que se emitió.
+     */
+    OptionClientView toOptionView(Quote quote, QuoteOption opt) {
         return new OptionClientView(
                 opt.getId(),
                 opt.getOrderIndex(),
                 opt.getTitulo(),
                 opt.getDescripcion(),
                 opt.getPrecio(),
+                quote.ivaSobre(opt.getPrecio()),
+                quote.totalConIva(opt.getPrecio()),
+                opt.getPrecioMensual(),
+                quote.ivaSobre(opt.getPrecioMensual()),
+                quote.totalConIva(opt.getPrecioMensual()),
                 opt.getCurrency(),
+                quote.getIvaPct(),
                 opt.isRecomendado(),
                 List.copyOf(opt.getFeatures())
         );
