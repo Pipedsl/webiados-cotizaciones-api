@@ -30,6 +30,14 @@ spring:
 
 server:
   port: ${PORT:8080}
+  # Compresión gzip de las respuestas. Viene apagada por defecto en Spring Boot. En
+  # Railway el egress se cobra; para una API JSON el ahorro es grande (medido en otro
+  # servicio del ecosistema: 400 KB → 63 KB, ~84%). Cuesta algo de CPU, que sí está
+  # incluida en el plan. Se comprime desde 1 KB para arriba.
+  compression:
+    enabled: true
+    mime-types: application/json,application/problem+json,text/plain,text/css,application/javascript
+    min-response-size: 1024
 
 app:
   jwt:
