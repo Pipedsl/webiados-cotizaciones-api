@@ -102,13 +102,60 @@
             <artifactId>h2</artifactId>
             <scope>test</scope>
         </dependency>
+        <!--
+            Postgres real, embebido, sin Docker. Las migraciones son específicas de
+            Postgres (TIMESTAMPTZ, UUID, ON DELETE SET NULL): probarlas contra H2 no
+            probaría nada. Zonky levanta un binario nativo de Postgres 16.
+        -->
+        <dependency>
+            <groupId>io.zonky.test</groupId>
+            <artifactId>embedded-postgres</artifactId>
+            <version>2.0.7</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- Fija la versión de los binarios de Postgres para todas las plataformas. -->
+            <dependency>
+                <groupId>io.zonky.test.postgres</groupId>
+                <artifactId>embedded-postgres-binaries-bom</artifactId>
+                <version>16.2.0</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <build>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <!--
+                        Por defecto Surefire solo toma *Test y se saltaría los *IT en
+                        silencio. Acá no hay build separado de integración: el Postgres
+                        es embebido, así que `mvn test` corre todo.
+                    -->
+                    <includes>
+                        <include>**/*Test.java</include>
+                        <include>**/*IT.java</include>
+                    </includes>
+                    <!--
+                        JWT_SECRET ya no tiene default (a propósito). Los tests que
+                        levantan el contexto necesitan uno: se inyecta solo acá, para las
+                        pruebas, y nunca sale del build.
+                    -->
+                    <systemPropertyVariables>
+                        <app.jwt.secret>test-secret-solo-para-el-build-no-usar-en-produccion-0123456789</app.jwt.secret>
+                    </systemPropertyVariables>
+                </configuration>
             </plugin>
         </plugins>
     </build>
