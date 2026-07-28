@@ -33,7 +33,10 @@ server:
 
 app:
   jwt:
-    secret: ${JWT_SECRET:change-me-in-prod-this-is-a-very-long-dev-secret-key-0123456789}
+    # SIN default a propósito: un secreto no tiene valor por defecto. Si JWT_SECRET no está
+    # definido, el servicio se niega a arrancar (ver JwtService). Un default cómodo dejaría
+    # producción firmando tokens con un secreto público y nadie se enteraría.
+    secret: ${JWT_SECRET}
     admin-ttl-minutes: ${JWT_ADMIN_TTL:480}
     client-ttl-minutes: ${JWT_CLIENT_TTL:30}
   admin:
@@ -41,6 +44,8 @@ app:
     bootstrap-password: ${ADMIN_BOOTSTRAP_PASSWORD:}
   quote:
     validity-days: ${QUOTE_VALIDITY_DAYS:15}
+    # Base de la landing que ve el cliente (la sirve el frontend Angular).
+    public-base-url: ${QUOTE_PUBLIC_BASE_URL:https://webiados.com/cotizacion}
   mail:
     from: ${MAIL_FROM:cotizaciones@webiados.com}
     notify-to: ${NOTIFY_TO:contacto@webiados.com}
