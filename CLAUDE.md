@@ -2,14 +2,40 @@
 
 This file provides guidance to Claude Code when working with this repository.
 
+> ## 📍 Empieza por acá
+> 1. [`SIGUIENTE.md`](SIGUIENTE.md) — qué toca hacer ahora y por qué
+> 2. [`docs/HOJA_DE_RUTA.md`](docs/HOJA_DE_RUTA.md) — el plan completo con sprints y criterios de verificación
+> 3. [`TASKLIST.md`](TASKLIST.md) — qué está hecho. **Se marca solo lo verificado**
+>
+> Contexto de todo Webiados: `../Demos-Webiados-Clientes/CONTROL.md`
+> Estrategia comercial: `../Demos-Webiados-Clientes/docs/estrategia_comercial.md`
+>
+> **Prioridad P0.** Este servicio está desplegado y vivo, y aun así las cotizaciones reales se
+> siguen escribiendo a mano en Markdown. El trabajo acá **no es construir: es hacer que se use.**
+>
+> **Regla dura:** los precios se leen de `pricing.md` vía `GET /api/v1/pricing` del Core. Nunca
+> se hardcodean ni se improvisan. Las secciones 10-15 de `pricing.md` son internas y no se
+> exponen jamás.
+
 ## Project
 
-`webiados-cotizaciones-api` — Spring Boot 3.x REST API that powers the Webiados quoting flow. Clients submit quote requests through a public form (Angular frontend at `cotiza.webiados.com`); admins review, price, and manage quotes through a private panel. Deployed on Railway with a PostgreSQL plugin.
+`webiados-cotizaciones-api` — Spring Boot 3.x REST API that powers the Webiados quoting flow.
+
+**The flow is outbound, not inbound.** An admin *creates* a quote with its options; the
+system issues a `codigo` + `clave`; the client opens the branded landing, unlocks it, and
+picks an option. There is **no public quote-request form** — see `docs/AUDITORIA.md`.
+
+Deployed on Railway with a PostgreSQL plugin. Real base URL:
+`https://cotizaciones-api-production-e0fb.up.railway.app`. The Angular frontend (panel and
+client landing) lives at `webiados.com` — `github.com/Pipedsl/webiados`.
+
+> ⚠️ `cotiza.webiados.com` appears throughout the older docs but **does not exist**
+> (NXDOMAIN, verified 2026-07-27).
 
 ## Commands
 
 - `./mvnw spring-boot:run` — start dev server (requires local Postgres or `.env` pointing at Railway).
-- `./mvnw test` — run unit + integration tests.
+- `./mvnw test` — run all 53 tests. Uses a real embedded Postgres (Zonky), **no Docker needed**.
 - `./mvnw package -DskipTests` — build the fat JAR.
 - `docker build -t webiados-cotizaciones-api .` — build the Docker image (Dockerfile at root).
 - Copy `.env.example` → `.env` and fill in values before running locally.
@@ -17,9 +43,14 @@ This file provides guidance to Claude Code when working with this repository.
 ## Architecture
 
 ### Domain
-- `Quote` — a client's quote request. Has status (`PENDING`, `REVIEWED`, `SENT`, `ACCEPTED`, `REJECTED`). Belongs to a client (email + phone) and contains `QuoteOption` line-items.
-- `QuoteOption` — a selectable service/product within a quote (name, price, quantity).
-- `Selection` — a pre-defined service card the client picks from the public form (`SelectionKind`: WEB, SOFTWARE, ECOMMERCE, etc.).
+- `Quote` — a quote issued to a client. Status is **persisted** as `PENDING` (draft),
+  `SENT` (delivered, has `sentAt`), `SELECTED` (client accepted, has `selectedAt`) or
+  `REJECTED`. `EXPIRED` is **derived** from `expiresAt`, never stored. Carries `ivaPct`
+  (19) — IVA and totals are computed, not stored.
+- `QuoteOption` — a selectable option within a quote: `titulo`, `descripcion`, `precio`
+  (one-off, net), `precioMensual` (recurring, net, nullable), `recomendado`, `features`.
+- `Selection` — an **audit-log row**: records that a client picked an option.
+  `SelectionKind` is `INITIAL` or `UPGRADE`. It is *not* a service catalogue.
 - `AdminUser` — back-office user with hashed password and JWT auth.
 
 ### Layers
@@ -38,27 +69,53 @@ security/     → JwtAuthFilter, JwtService, RateLimiter
 - `V1__init.sql` — base schema (quotes, quote_options, selections, admin_users).
 - `V2__add_clave_texto.sql` — adds `clave_texto` to admin recovery.
 - `V3__add_landing_fields.sql` — adds `titulo`, `mensaje`, `imagenes` to quotes for branded landing pages.
+- `V4__persist_status_and_recurring_price.sql` — persists `status` + `sent_at` +
+  `rejected_at` + `iva_pct` on `quote`, and `precio_mensual` on `quote_option`. This is
+  what makes the sales funnel measurable.
 
 ### Auth
 - Admins authenticate via `POST /api/admin/auth/login` → JWT in response body.
 - JWT is sent as `Authorization: Bearer <token>` on every protected request.
-- `RateLimiter` blocks brute-force on the unlock endpoint.
+- `RateLimiter` blocks brute-force on the **client unlock** endpoint (there is no admin unlock).
+- `clave_texto` stores the client's password **in clear text** alongside the bcrypt hash,
+  by design (V2), so the panel can show it again. It is exposed in the admin detail.
+- **`JWT_SECRET` has no default.** The service refuses to start if it's missing, blank, the
+  compromised dev value that once lived in the repo, or shorter than 32 bytes (`JwtService`).
+  A secret has no fallback: if it's absent, the app fails and shouts.
 
 ### API surface
 
+Verified against the code on 2026-07-27. The previous version of this table was largely
+wrong — see `docs/AUDITORIA.md` §2.1.
+
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| POST | `/api/quotes` | public | Client submits quote request |
-| GET | `/api/quotes/{code}` | public (code) | Client views their quote |
+| POST | `/api/admin/auth/login` | — | Admin login → JWT |
+| POST | `/api/admin/quotes` | admin | Create a quote with its options (`createdAt` optional, for backfilling history) |
 | GET | `/api/admin/quotes` | admin | List all quotes |
-| GET | `/api/admin/quotes/{id}` | admin | Quote detail |
-| PUT | `/api/admin/quotes/{id}` | admin | Update quote (price, status, options, landing fields) |
-| POST | `/api/admin/auth/login` | — | Admin login |
-| POST | `/api/admin/auth/unlock` | — | Admin unlock via recovery key |
-| GET | `/api/selections` | public | List selectable services |
+| GET | `/api/admin/quotes/{id}` | admin | Quote detail (includes `claveTexto` and selection history) |
+| PATCH | `/api/admin/quotes/{id}` | admin | Partial update — a `null` field means *leave it alone* |
+| POST | `/api/admin/quotes/{id}/send` | admin | Email the quote to the client and mark it `SENT`. Rolls back if the mail fails |
+| POST | `/api/admin/quotes/{id}/mark-sent` | admin | Record a delivery made outside the system (WhatsApp, PDF), with its real date, **without emailing** |
+| POST | `/api/admin/quotes/{id}/reject` | admin | Record that the client declined |
+| POST | `/api/admin/quotes/{id}/options` | admin | Add an option to an existing quote |
+| PUT | `/api/admin/quotes/{id}/options/{optionId}` | admin | Update an option |
+| DELETE | `/api/admin/quotes/{id}/options/{optionId}` | admin | Delete an option — refused if it's the one the client selected |
+| POST | `/api/client/quotes/{codigo}/unlock` | public | Client exchanges `clave` for a 30-min JWT (rate-limited) |
+| GET | `/api/client/quotes/{codigo}` | client | The quote as the client sees it |
+| POST | `/api/client/quotes/{codigo}/select` | client | Client picks an option |
+| GET | `/actuator/health` | public | Health check |
+
+Client tokens carry the `codigo` as a claim and every client endpoint verifies it matches
+the path — a valid token cannot read another client's quote.
 
 ### Email
-`EmailService` sends transactional mail via SMTP (Resend recommended). Triggered on new quote submission and on status change to `SENT`.
+`EmailService` sends transactional mail via SMTP (Resend recommended). Two paths:
+
+- `sendQuoteToClient` — sends the landing URL + `clave` **to the client**. Synchronous and
+  propagates failures on purpose: a quote must never be marked `SENT` if the mail didn't go out.
+- `notifySelection` — `@Async` internal notice **to Webiados** (`NOTIFY_TO`) when a client
+  picks an option. Failures are logged and swallowed.
 
 ## Conventions
 
@@ -66,7 +123,7 @@ security/     → JwtAuthFilter, JwtService, RateLimiter
 - `application.yml` reads **all secrets from env vars** — never hardcode credentials.
 - Flyway migration files follow `V{n}__{description}.sql` naming; never edit existing migrations.
 - CORS allowed origins are configured via `CORS_ALLOWED_ORIGINS` env var (comma-separated).
-- The frontend counterpart lives at `github.com/Pipedsl/webiados` (Angular 21, `cotiza.webiados.com` subdomain).
+- The frontend counterpart lives at `github.com/Pipedsl/webiados` (Angular 21) and is served from `webiados.com`: admin panel at `/admin`, client landing at `/cotizacion/{codigo}`.
 
 ## Environment variables
 
@@ -75,7 +132,8 @@ See `.env.example` for the full list. Key vars:
 | Var | Notes |
 |-----|-------|
 | `DATABASE_URL` | Injected by Railway Postgres plugin |
-| `JWT_SECRET` | Long random string (≥64 chars) |
+| `JWT_SECRET` | Long random string (≥64 chars). **Required** — no default; the service won't boot without it |
 | `ADMIN_BOOTSTRAP_EMAIL/PASSWORD` | Seeds first admin on cold start |
 | `MAIL_*` | SMTP config (Resend or Brevo) |
 | `CORS_ALLOWED_ORIGINS` | Comma-separated list of allowed frontend origins |
+| `QUOTE_PUBLIC_BASE_URL` | Base of the client landing URL (default `https://webiados.com/cotizacion`) |
