@@ -1,6 +1,10 @@
 target/
-!.mvn/wrapper/maven-wrapper.jar
-.mvn/
+# El Maven wrapper se versiona: mvnw + .mvn/wrapper/maven-wrapper.properties.
+# (Se re-incluye el subdirectorio porque git no desciende a un dir ignorado.)
+.mvn/*
+!.mvn/wrapper/
+.mvn/wrapper/*
+!.mvn/wrapper/maven-wrapper.properties
 *.class
 *.log
 .env
