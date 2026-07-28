@@ -1,0 +1,71 @@
+{
+  "clientName": "Pastelería Vientos del Sur",
+  "clientEmail": null,
+  "titulo": "Tienda online — línea vegana, sin gluten y sin azúcar",
+  "mensaje": "Objetivo principal: mostrar y vender online lo que ya existe en tienda, llegando al consumidor final (B2C) con catálogo, carrito de compras, pago online y boleta electrónica automática. La tienda se construye además preparada para incorporar un canal mayorista (B2B) más adelante, cuando ustedes decidan abrirlo. Referencia de experiencia de compra: dulceriapraline.cl\n\nCualquier producto/servicio que no esté especificado en este documento no está incluido. De ser necesario agregar otro producto/servicio, este deberá ser cotizado.\n\nEl pago del desarrollo se divide en dos partes: 50% al aprobar la cotización y 50% antes de la puesta en línea. A diferencia de un sitio informativo, una tienda online necesita operar todos los días —cobrar, respaldar, gestionar pedidos— por lo que el servicio mensual es parte del funcionamiento de la tienda, no un adicional opcional.\n\nLa boleta electrónica se emite a través de un proveedor certificado ante el SII que el comercio contrata o ya utiliza; su costo es independiente de esta cotización. Webiados realiza la integración de ese servicio con la tienda.\n\nPLAN MENSUAL (para operar la tienda, aparte del desarrollo): Opción 1 — $49.000 + IVA ($58.310) al mes, corresponde a las alternativas A y B. Opción 2 — $74.000 + IVA ($88.060) al mes, corresponde a la alternativa C (incluye el asistente con IA operando, hasta 300 conversaciones al mes con el consumo de IA incluido). Incluye hosting, dominio y respaldos automáticos; boleta SII automática operando y al día; pasarela de pago operando; CRM, catálogo y panel funcionando; actualizaciones y soporte. El Plan Mensual nunca cobra comisión por venta: es un valor fijo. Arranca el mes siguiente a la puesta en línea, nunca durante el desarrollo.\n\nALTERNATIVA SIN MENSUALIDAD (compra total, pago único, bajo su propia administración con hosting y cuentas propias, 3 meses de soporte incluido): Opción A $2.200.000 + IVA ($2.618.000) · Opción B $2.600.000 + IVA ($3.094.000) · Opción C $3.450.000 + IVA ($4.105.500).\n\nMÁS ADELANTE — CANAL MAYORISTA (B2B), OPCIONAL: las tres opciones se construyen sobre una base que ya contempla el canal mayorista (catálogo, precios, clientes y pedidos quedan modelados de forma que el día que ustedes abran ese canal no haya que rehacer la tienda). No es parte de esta cotización y no se cobra ahora. Cuando decidan activarlo: $350.000 + IVA ($416.500) por el desarrollo (login para clientes mayoristas, lista de precios mayorista separada, pedidos B2B con su propio flujo e identificados en el CRM), más $15.000 + IVA ($17.850) al mes por la operación del canal en el Plan Mensual. Valores referenciales, vigentes por 6 meses desde la puesta en línea. En la modalidad sin mensualidad, el agregado del canal mayorista es de $700.000 + IVA ($833.000), pago único.\n\nEl sitio es de ustedes: se entrega el código al firmar.",
+  "createdAt": "2026-07-27T12:00:00Z",
+  "notes": "Cotización enviada al cliente, a la espera de respuesta. Cargada como parte de la migración del histórico (Sprint 1). La fecha de emisión (2026-07-27) se tomó de la última modificación del Markdown original, que no lleva fecha impresa — a diferencia del PDF de Macarena, que sí dice 24 JUL 2026. Si la fecha real fue otra, corregir con PATCH antes de medir la tasa de cierre.",
+  "options": [
+    {
+      "titulo": "Opción A — Tienda Online",
+      "descripcion": "Tienda online completa con catálogo, carrito, pago online y boleta electrónica al SII.",
+      "precio": 1040000,
+      "currency": "CLP",
+      "recomendado": false,
+      "features": [
+        "Diseño y desarrollo de la tienda ($640.000)",
+        "Diseño: maquetación completa de la web (inicio, catálogo, ficha de producto, carrito, nosotros, contacto), adaptada a celular y computador, con su identidad actual",
+        "Desarrollo: catálogo de productos ilimitado con categorías y buscador (ideal / sin gluten / sin azúcar / vegano); carrito de compras; panel de administración para editar textos, fotos, productos y precios sin depender de nadie",
+        "Pago online y boleta electrónica ($250.000)",
+        "Desarrollo: integración de pago con Webpay y/o MercadoPago; integración de la emisión de boleta electrónica con el proveedor certificado ante el SII del comercio (el costo del proveedor no está incluido), automática en cada venta; control de stock y estados de pedido (recibido → en preparación → despachado)",
+        "Puesta en marcha y entrega ($150.000)",
+        "Desarrollo: CRM de clientes y pedidos; formularios de contacto; botón de pedido por WhatsApp; asistente de chat guiado; carga inicial de su catálogo hecha por nuestro equipo; capacitación; entrega del código del sitio en su GitHub (el sitio es suyo)",
+        "Sin mensualidad (compra total): $2.200.000 + IVA ($2.618.000)"
+      ],
+      "precioMensual": 49000
+    },
+    {
+      "titulo": "Opción B — Tienda Online + Identidad visual ⭐",
+      "descripcion": "Todo lo de la Opción A más la identidad visual de la web: logotipo y sistema gráfico aplicado a toda la tienda.",
+      "precio": 1240000,
+      "currency": "CLP",
+      "recomendado": true,
+      "features": [
+        "Diseño y desarrollo de la tienda ($640.000)",
+        "Diseño: maquetación completa de la web (inicio, catálogo, ficha de producto, carrito, nosotros, contacto), adaptada a celular y computador",
+        "Desarrollo: catálogo ilimitado con categorías y buscador; carrito de compras; panel de administración editable",
+        "Pago online y boleta electrónica ($250.000)",
+        "Desarrollo: integración de pago (Webpay / MercadoPago); boleta electrónica al SII automática; control de stock y estados de pedido",
+        "Puesta en marcha y entrega ($150.000)",
+        "Desarrollo: CRM de clientes y pedidos; formularios; botón de pedido por WhatsApp; asistente de chat guiado; carga inicial del catálogo; capacitación; entrega del código",
+        "Identidad visual de la web ($200.000)",
+        "Diseño: logotipo y sistema gráfico (colores y tipografías) aplicado a toda la tienda",
+        "Sin mensualidad (compra total): $2.600.000 + IVA ($3.094.000)"
+      ],
+      "precioMensual": 49000
+    },
+    {
+      "titulo": "Opción C — Tienda Completa + Marca + Asistente IA",
+      "descripcion": "Todo lo de la Opción A más branding completo con manual de marca y un asistente con Inteligencia Artificial.",
+      "precio": 1640000,
+      "currency": "CLP",
+      "recomendado": false,
+      "features": [
+        "Diseño y desarrollo de la tienda ($640.000)",
+        "Diseño: maquetación completa de la web, adaptada a celular y computador",
+        "Desarrollo: catálogo ilimitado con categorías y buscador; carrito; panel de administración editable",
+        "Pago online y boleta electrónica ($250.000)",
+        "Desarrollo: pago (Webpay / MercadoPago); boleta electrónica al SII automática; control de stock y estados de pedido",
+        "Puesta en marcha y entrega ($150.000)",
+        "Desarrollo: CRM; formularios; pedido por WhatsApp; asistente de chat guiado; carga inicial del catálogo; capacitación; entrega del código",
+        "Branding completo + manual de marca ($300.000)",
+        "Diseño: identidad completa (logo, paleta, tipografías, versiones y aplicaciones) con un manual de marca para usarla de forma consistente en web, redes, packaging y local",
+        "Asistente con Inteligencia Artificial ($300.000)",
+        "Desarrollo: asistente que responde por la web y redes sobre ingredientes y opciones veganas / sin gluten / sin azúcar usando su catálogo real; toma pedidos y captura datos de clientes hacia el CRM",
+        "El asistente con IA incluye hasta 300 conversaciones al mes, con el consumo de IA incluido en el mensual. Excedentes: 301 a 500, +$12.000 al mes; 501 a 1.000, +$28.000. Sobre 1.000 conversaciones conviene usar una cuenta de IA propia y se descuentan $13.000 del mensual",
+        "Sin mensualidad (compra total): $3.450.000 + IVA ($4.105.500)"
+      ],
+      "precioMensual": 74000
+    }
+  ]
+}

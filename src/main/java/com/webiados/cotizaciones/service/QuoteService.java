@@ -34,16 +34,18 @@ public class QuoteService {
     private final CodeGenerator codeGenerator;
     private final QuoteMapper mapper;
     private final AppProperties props;
+    private final EmailService emailService;
 
     public QuoteService(QuoteRepository quoteRepo, SelectionRepository selectionRepo,
                         PasswordEncoder passwordEncoder, CodeGenerator codeGenerator,
-                        QuoteMapper mapper, AppProperties props) {
+                        QuoteMapper mapper, AppProperties props, EmailService emailService) {
         this.quoteRepo = quoteRepo;
         this.selectionRepo = selectionRepo;
         this.passwordEncoder = passwordEncoder;
         this.codeGenerator = codeGenerator;
         this.mapper = mapper;
         this.props = props;
+        this.emailService = emailService;
     }
 
     @Transactional
@@ -53,29 +55,104 @@ public class QuoteService {
         String claveHash = passwordEncoder.encode(clave);
 
         Instant now = Instant.now();
-        Instant expiresAt = now.plus(props.quote().validityDays(), ChronoUnit.DAYS);
+        // Solo el histórico informa createdAt; una cotización nueva se fecha sola.
+        Instant createdAt = req.createdAt() != null ? req.createdAt() : now;
+        if (createdAt.isAfter(now)) {
+            throw new IllegalArgumentException("La fecha de emisión no puede estar en el futuro");
+        }
+        Instant expiresAt = createdAt.plus(props.quote().validityDays(), ChronoUnit.DAYS);
 
         var quote = new Quote(UUID.randomUUID(), codigo, claveHash, clave,
-                req.clientName(), req.clientEmail(), req.notes(), now, expiresAt,
+                req.clientName(), req.clientEmail(), req.notes(), createdAt, expiresAt,
                 req.titulo(), req.mensaje(), req.imagenes());
 
         int index = 0;
         for (OptionRequest optReq : req.options()) {
-            var option = new QuoteOption(
-                    UUID.randomUUID(), index++,
-                    optReq.titulo(), optReq.descripcion(),
-                    optReq.precio(),
-                    optReq.currency() != null ? optReq.currency() : "CLP",
-                    optReq.recomendado(),
-                    optReq.features()
-            );
-            quote.addOption(option);
+            quote.addOption(newOption(optReq, index++));
         }
 
         quoteRepo.save(quote);
 
-        String url = "https://webiados.com/cotizacion/" + codigo;
-        return new CreateQuoteResponse(quote.getId(), codigo, clave, url);
+        return new CreateQuoteResponse(quote.getId(), codigo, clave, publicUrl(codigo));
+    }
+
+    private QuoteOption newOption(OptionRequest req, int orderIndex) {
+        return new QuoteOption(
+                UUID.randomUUID(), orderIndex,
+                req.titulo(), req.descripcion(),
+                req.precio(), req.precioMensual(),
+                req.currency() != null ? req.currency() : "CLP",
+                req.recomendado(),
+                req.features()
+        );
+    }
+
+    /** URL de la landing del cliente. La sirve el frontend, no este servicio. */
+    public String publicUrl(String codigo) {
+        return props.quote().publicBaseUrl() + "/" + codigo;
+    }
+
+    /**
+     * Marca la cotización como enviada y se la manda por correo al cliente.
+     *
+     * <p>El correo va <em>antes</em> de persistir el estado: si el envío falla, la
+     * transacción se revierte y la cotización no queda marcada como enviada. Una SENT sin
+     * correo enviado falsearía la tasa de cierre, que es justo el dato que esto existe
+     * para producir.
+     */
+    @Transactional
+    public QuoteAdminDetail send(UUID id) {
+        var quote = quoteRepo.findWithOptionsById(id)
+                .orElseThrow(() -> new NoSuchElementException("Cotización no encontrada"));
+
+        if (quote.getOptions().isEmpty()) {
+            throw new IllegalStateException("La cotización no tiene opciones; no se puede enviar");
+        }
+
+        emailService.sendQuoteToClient(quote, publicUrl(quote.getCodigo()));
+        quote.markSent(Instant.now());
+
+        var history = selectionRepo.findByQuoteIdOrderByCreatedAtAsc(id);
+        return mapper.toDetail(quote, history, Instant.now());
+    }
+
+    /**
+     * Registra una entrega hecha fuera del sistema, sin mandar ningún correo.
+     *
+     * <p>Existe por dos motivos: cargar el histórico —cotizaciones que ya se enviaron en
+     * PDF— sin volver a escribirle a un cliente que hace semanas la recibió, y cubrir el
+     * caso normal de entregarla por WhatsApp o en una reunión.
+     */
+    @Transactional
+    public QuoteAdminDetail markSentManually(UUID id, Instant sentAt) {
+        var quote = quoteRepo.findWithOptionsById(id)
+                .orElseThrow(() -> new NoSuchElementException("Cotización no encontrada"));
+        quote.recordManualDelivery(sentAt != null ? sentAt : Instant.now());
+        var history = selectionRepo.findByQuoteIdOrderByCreatedAtAsc(id);
+        return mapper.toDetail(quote, history, Instant.now());
+    }
+
+    /** Registra que el cliente dijo que no. Sin esto, un "no" es indistinguible de silencio. */
+    @Transactional
+    public QuoteAdminDetail reject(UUID id) {
+        var quote = quoteRepo.findWithOptionsById(id)
+                .orElseThrow(() -> new NoSuchElementException("Cotización no encontrada"));
+        quote.markRejected(Instant.now());
+        var history = selectionRepo.findByQuoteIdOrderByCreatedAtAsc(id);
+        return mapper.toDetail(quote, history, Instant.now());
+    }
+
+    /**
+     * Agrega una opción a una cotización que ya existe, sin tener que rehacerla —
+     * rehacerla cambiaría el código y la clave que el cliente ya tiene.
+     */
+    @Transactional
+    public QuoteAdminDetail addOption(UUID quoteId, OptionRequest req) {
+        var quote = quoteRepo.findWithOptionsById(quoteId)
+                .orElseThrow(() -> new NoSuchElementException("Cotización no encontrada"));
+        quote.addOption(newOption(req, quote.getOptions().size()));
+        var history = selectionRepo.findByQuoteIdOrderByCreatedAtAsc(quoteId);
+        return mapper.toDetail(quote, history, Instant.now());
     }
 
     public List<QuoteAdminSummary> listAll() {
@@ -98,7 +175,8 @@ public class QuoteService {
     public QuoteAdminDetail updateQuote(UUID id, UpdateQuoteRequest req) {
         var quote = quoteRepo.findWithOptionsById(id)
                 .orElseThrow(() -> new NoSuchElementException("Cotización no encontrada"));
-        quote.updateMeta(req.titulo(), req.mensaje(), req.notes(), req.expiresAt());
+        quote.updateMeta(req.titulo(), req.mensaje(), req.notes(), req.imagenes(),
+                req.expiresAt());
         var history = selectionRepo.findByQuoteIdOrderByCreatedAtAsc(id);
         return mapper.toDetail(quote, history, Instant.now());
     }
@@ -111,18 +189,40 @@ public class QuoteService {
                 .filter(o -> o.getId().equals(optionId))
                 .findFirst()
                 .orElseThrow(() -> new NoSuchElementException("Opción no encontrada"));
-        option.update(req.titulo(), req.descripcion(), req.precio(),
+        option.update(req.titulo(), req.descripcion(), req.precio(), req.precioMensual(),
                 req.currency(), req.recomendado(), req.features());
         var history = selectionRepo.findByQuoteIdOrderByCreatedAtAsc(quoteId);
         return mapper.toDetail(quote, history, Instant.now());
     }
 
+    /**
+     * Borra una opción.
+     *
+     * <p>Se niega si es la que el cliente eligió: en base de datos, borrar la opción
+     * arrastra por CASCADE las filas de {@code selection} que registran esa elección y
+     * deja la cotización de vuelta en "sin elegir". Es decir, un solo DELETE podía borrar
+     * el hecho de que una cotización fue aceptada, sin avisar. Eso es pérdida de datos.
+     */
     @Transactional
     public void deleteOption(UUID quoteId, UUID optionId) {
         var quote = quoteRepo.findWithOptionsById(quoteId)
                 .orElseThrow(() -> new NoSuchElementException("Cotización no encontrada"));
+
+        if (optionId.equals(quote.getSelectedOptionId())) {
+            throw new IllegalStateException(
+                    "Esa es la opción que el cliente eligió: borrarla perdería el registro de "
+                            + "la aceptación. Si de verdad hay que quitarla, primero hay que "
+                            + "resolver la cotización a mano.");
+        }
+
         boolean removed = quote.getOptions().removeIf(o -> o.getId().equals(optionId));
         if (!removed) throw new NoSuchElementException("Opción no encontrada");
+
+        // Reindexa para que el orden no quede con huecos.
+        int i = 0;
+        for (QuoteOption o : quote.getOptions()) {
+            o.setOrderIndex(i++);
+        }
     }
 
     public Quote findByCodigo(String codigo) {

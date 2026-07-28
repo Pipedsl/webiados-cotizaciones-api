@@ -15,7 +15,12 @@ public record AppProperties(
     public record Admin(String bootstrapEmail, String bootstrapPassword) {
     }
 
-    public record Quote(int validityDays) {
+    /**
+     * @param publicBaseUrl base de la URL que ve el cliente, sin barra final. La landing
+     *                      la sirve el frontend Angular, no este servicio. Antes estaba
+     *                      escrita a mano dentro de QuoteService.
+     */
+    public record Quote(int validityDays, String publicBaseUrl) {
     }
 
     public record Mail(String from, String notifyTo) {

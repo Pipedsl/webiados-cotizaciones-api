@@ -1,0 +1,61 @@
+{
+  "clientName": "Macarena Larraín",
+  "clientEmail": null,
+  "titulo": "Formulario y portafolio de charlas — 42K de Perseverancia",
+  "mensaje": "Sitio: https://42kdeperseverancia.cl/ (WordPress + Pagelayer Pro). Objetivo: reemplazar el formulario externo (Google Forms) por un formulario propio dentro del sitio, y crear un portafolio de charlas administrable por Macarena.\n\nEl pago de este proyecto se divide en dos partes: 50% al inicio del proyecto, una vez aprobada la cotización, y el otro 50% antes del envío de archivos finales.\n\nCualquier producto/servicio que no esté especificado en este documento no está incluido. De ser necesario agregar otro producto/servicio, este deberá ser cotizado.\n\nMantención mensual (aparte, no incluida en los valores de arriba): Plan Esencial $25.000 + IVA ($29.750) al mes · Plan Integral (recomendado) $50.000 + IVA ($59.500) al mes. El hosting del sitio ya está contratado con Webiados ($112.000 anuales) y es independiente del plan de mantención.",
+  "createdAt": "2026-07-24T15:00:00Z",
+  "notes": "Cotización original del 2026-07-24 (PDF). El cliente aceptó la Opción C. El plan de mantención mensual ($25.000 Esencial / $50.000 Integral) es una decisión aparte del proyecto y no está modelado como mensualidad de una opción: ver docs/AUDITORIA.md, impedimentos abiertos.",
+  "options": [
+    {
+      "titulo": "Opción A — Formulario + Portafolio manual",
+      "descripcion": "Formulario de solicitud de charlas y página portafolio, funcionando por separado, sin conexión automática entre ambos.",
+      "precio": 150000,
+      "currency": "CLP",
+      "recomendado": false,
+      "features": [
+        "Formulario de solicitud de charlas ($100.000)",
+        "Diseño: maquetación del formulario de contacto de hasta 5 campos (nombre, organización, correo, fecha tentativa, descripción de la actividad), estilos, estados y adaptación responsiva, integrado visualmente al sitio",
+        "Desarrollo: implementación con Fluent Forms; envío automático de la solicitud al correo de Macarena; registro privado de las solicitudes dentro del administrador de WordPress; mensaje de confirmación posterior al envío; protección básica anti-spam",
+        "Página Portafolio ($50.000)",
+        "Diseño: página de presentación general de las charlas realizadas (fotografía, nombre del evento, fecha y breve descripción)",
+        "Desarrollo: tipo de contenido a medida \"Charla\" (Custom Post Type) + ACF con campos básicos; carga inicial de hasta 4 charlas",
+        "Las futuras charlas las incorpora Macarena manualmente desde el administrador",
+        "El formulario y el portafolio funcionan por separado, sin conexión automática entre ambos"
+      ],
+      "precioMensual": null
+    },
+    {
+      "titulo": "Opción B — Portafolio autogestionable con automatización",
+      "descripcion": "Formulario ampliado y portafolio autogestionable, con creación automática de la ficha de charla en borrador al enviarse el formulario.",
+      "precio": 260000,
+      "currency": "CLP",
+      "recomendado": false,
+      "features": [
+        "Formulario de solicitud de charlas ($100.000)",
+        "Diseño: maquetación del formulario de hasta 8 campos (nombre, organización, correo, teléfono, fecha tentativa, ciudad o modalidad, cantidad de asistentes, objetivo de la charla), estilos y adaptación responsiva",
+        "Desarrollo: implementación con Fluent Forms; registro privado de todas las solicitudes en el administrador; notificación automática al correo de Macarena; mensaje de confirmación al solicitante; casilla de aceptación de tratamiento de datos; protección anti-spam; registro exportable",
+        "Página Portafolio ($160.000)",
+        "Diseño: página general con todas las charlas publicadas y diseño de la ficha individual de cada charla",
+        "Desarrollo: Custom Post Type \"Charla\" + ACF completo (título, organización, descripción, fecha, ubicación, fotografías, enlace a video); panel de administración para agregar, editar o eliminar charlas sin modificar el diseño; carga inicial de hasta 8 charlas; capacitación básica",
+        "Automatización: al enviarse el formulario se crea automáticamente una ficha de charla en estado borrador con los datos ya conocidos; cuando la charla se realiza, Macarena o quien administre solo agrega la fotografía y publica"
+      ],
+      "precioMensual": null
+    },
+    {
+      "titulo": "Opción C — Sistema completo con gestión de solicitudes",
+      "descripcion": "Sistema completo: formulario con lógica condicional, clasificación por estado y automatización completa solicitud → ficha borrador → publicación previa aprobación.",
+      "precio": 380000,
+      "currency": "CLP",
+      "recomendado": true,
+      "features": [
+        "Formulario de solicitud de charlas ($100.000)",
+        "Diseño: maquetación del formulario de hasta 10 campos, incluyendo las variaciones visuales según modalidad presencial u online",
+        "Desarrollo: formulario de hasta 10 campos con lógica condicional según modalidad; creación automática de una ficha privada por cada solicitud; clasificación por estado (recibida, en evaluación, confirmada, realizada, publicada); correo automático de confirmación al solicitante; notificación automática a Macarena; casilla de autorización de datos; anti-spam; exportación de solicitudes en CSV o Excel",
+        "Página Portafolio ($280.000)",
+        "Diseño: página general y ficha individual de cada charla, con temática, testimonios, videos y galería de fotografías",
+        "Desarrollo: automatización completa solicitud → ficha borrador → publicación previa revisión y aprobación de Macarena; campos enriquecidos (temática, testimonios, videos, múltiples fotografías); filtros por temática, modalidad o año; optimización SEO básica por charla; carga inicial de hasta 12 charlas; capacitación completa"
+      ],
+      "precioMensual": null
+    }
+  ]
+}
