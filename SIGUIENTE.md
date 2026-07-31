@@ -13,7 +13,7 @@ desplegado** (`cotizaciones-api-production-e0fb.up.railway.app`, Railway; V4 des
 pastelería Vientos del Sur, **se escribieron a mano en Markdown y se exportaron a PDF**.
 
 > ⚠️ `cotiza.webiados.com` **no existe** (NXDOMAIN). El panel y la landing viven en
-> `webiados.com` (`/admin` y `/cotizacion/{codigo}`), frontend Angular en `Pipedsl/webiados`.
+> `webiados.com` (`/admin` y `/cotizacion/{codigo}`), frontend Angular en `webiados/webiados`.
 
 Eso significa tres cosas, todas malas: se pierde el historial comercial, se improvisan montos
 fuera de `pricing.md`, y no hay forma de saber cuántas cotizaciones se enviaron ni cuántas se
@@ -43,7 +43,7 @@ no escribe en producción ni recibe credenciales). Estados en el modelo V4:
 El impedimento real **no** era la landing: era que el **panel no tenía botón de Enviar**. El
 backend ya envía (V4: `POST /{id}/send` manda link+clave al cliente y marca `SENT`; más
 `mark-sent`, `reject`, `precioMensual`). El **frontend** ya quedó enganchado en la rama
-`feat/panel-envio-cotizaciones-v4` de `Pipedsl/webiados` (Vercel) — **falta que Felipe autorice
+`feat/panel-envio-cotizaciones-v4` de `webiados/webiados` (Vercel) — **falta que Felipe autorice
 su deploy** (mergear a `main` = producción).
 
 **Criterio de verificación:** una cotización enviada a un cliente real desde el sistema.

@@ -27,7 +27,7 @@ picks an option. There is **no public quote-request form** — see `docs/AUDITOR
 
 Deployed on Railway with a PostgreSQL plugin. Real base URL:
 `https://cotizaciones-api-production-e0fb.up.railway.app`. The Angular frontend (panel and
-client landing) lives at `webiados.com` — `github.com/Pipedsl/webiados`.
+client landing) lives at `webiados.com` — `github.com/webiados/webiados`.
 
 > ⚠️ `cotiza.webiados.com` appears throughout the older docs but **does not exist**
 > (NXDOMAIN, verified 2026-07-27).
@@ -123,7 +123,7 @@ the path — a valid token cannot read another client's quote.
 - `application.yml` reads **all secrets from env vars** — never hardcode credentials.
 - Flyway migration files follow `V{n}__{description}.sql` naming; never edit existing migrations.
 - CORS allowed origins are configured via `CORS_ALLOWED_ORIGINS` env var (comma-separated).
-- The frontend counterpart lives at `github.com/Pipedsl/webiados` (Angular 21) and is served from `webiados.com`: admin panel at `/admin`, client landing at `/cotizacion/{codigo}`.
+- The frontend counterpart lives at `github.com/webiados/webiados` (Angular 21) and is served from `webiados.com`: admin panel at `/admin`, client landing at `/cotizacion/{codigo}`.
 
 ## Environment variables
 

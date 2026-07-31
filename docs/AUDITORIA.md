@@ -221,7 +221,7 @@ caracteres. Para una pastelería es fricción real.
 `V3__add_landing_fields.sql` (`titulo`, `mensaje`, `imagenes`) apunta a resolver esto por
 el lado de la landing, y es el camino correcto. Pero **la landing no la genera este
 servicio** — la renderiza el Angular en `webiados.com/cotizacion/{codigo}`, que vive en
-otro repo (`github.com/Pipedsl/webiados`). No pude auditar cómo se ve. **Esa evaluación
+otro repo (`github.com/webiados/webiados`). No pude auditar cómo se ve. **Esa evaluación
 es el siguiente paso obligatorio de 1.5** y no se puede hacer desde este repo.
 
 ### 🟠 #5 — Los precios no salen de `pricing.md`, y ya se están improvisando
@@ -439,7 +439,7 @@ de Macarena y del Markdown de la pastelería: si alguien cambia esa cuenta, el t
 ### Lo que sigue abierto, dicho claro
 
 1. **La landing (#4).** Es el impedimento más grande que queda y **no se puede cerrar
-   desde este repo**: la renderiza el Angular de `github.com/Pipedsl/webiados`. Hasta
+   desde este repo**: la renderiza el Angular de `github.com/webiados/webiados`. Hasta
    verla al lado del PDF, no se sabe si el cliente va a recibir algo tan presentable.
 2. **Los precios siguen sin salir de `pricing.md` (#5).** Es el Sprint 2. Nada impide
    todavía teclear un monto inventado.
