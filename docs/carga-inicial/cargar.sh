@@ -106,7 +106,10 @@ echo "→ Estado final:"
 api GET /api/admin/quotes | python3 -c '
 import sys, json
 for q in json.load(sys.stdin):
-    print(f"   {q[\"status\"]:<9} {q[\"clientName\"]:<28} enviada: {q[\"sentAt\"] or \"—\"}")
+    status = q["status"]
+    name = q["clientName"]
+    sent = q["sentAt"] or "—"
+    print("   %-9s %-28s enviada: %s" % (status, name, sent))
 '
 
 cat <<NOTA
