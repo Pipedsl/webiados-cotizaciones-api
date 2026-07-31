@@ -3,7 +3,8 @@
 > Asociada a [`docs/HOJA_DE_RUTA.md`](docs/HOJA_DE_RUTA.md) · Prioridad P0
 > **Se marca solo lo verificado.**
 
-**Progreso: 2 / 20** · Sprint 1 casi cerrado: falta desplegar V4 y correr la carga.
+**Progreso: 4 / 20** · V4 y frontend desplegados (2026-07-31), histórico cargado. Falta el DoD:
+usar el sistema con un prospecto real.
 
 > 🔍 **Auditoría del código hecha el 2026-07-27:** [`docs/AUDITORIA.md`](docs/AUDITORIA.md).
 > Léela antes de seguir — cambia el alcance de los sprints 2, 3 y 4.
@@ -15,11 +16,10 @@
       · Panel abre en `webiados.com/admin/login`
       · ⚠️ `cotiza.webiados.com` **no existe** (NXDOMAIN) — la doc apunta a un dominio muerto
       · ⚠️ Login efectivo **no verificado**: faltan credenciales
-- [ ] 1.2 Macarena Larraín cargada — Opción C, $380.000 + IVA, `SELECTED`
-      · Payload y script listos y **ensayados contra Postgres real** (`CargaHistoricaIT`)
-      · Falta: desplegar V4 y que **Felipe** corra `docs/carga-inicial/cargar.sh`
-- [ ] 1.3 Pastelería Vientos del Sur cargada — 3 opciones, `SENT`
-      · Ídem. `SENT` ya existe en el modelo (V4), con su fecha de envío
+- [x] 1.2 Macarena Larraín cargada — Opción C, $380.000 + IVA, `SELECTED`
+      · Cargada por Felipe el 2026-07-31 (V4 en producción). Estado `SELECTED`, con nota del 50% pagado
+- [x] 1.3 Pastelería Vientos del Sur cargada — 3 opciones (con mensualidad), `SENT`
+      · Cargada por Felipe el 2026-07-31. Estado `SENT` con su fecha de envío
 - [x] 1.4 Impedimentos para usarlo, escritos → [`docs/AUDITORIA.md`](docs/AUDITORIA.md) §3
 - [ ] 1.5 Impedimentos resueltos — **parcial**, ver [AUDITORIA §5.bis](docs/AUDITORIA.md)
       - [x] Estado `SENT`/`REJECTED` persistido, con fecha de envío (V4)
@@ -28,6 +28,8 @@
       - [x] Precio mensual/recurrente en el modelo (`precio_mensual`)
       - [x] Backdating para cargar el histórico con sus fechas reales
       - [x] Bugs del camino de edición (§3 #7): PATCH, `imagenes`, agregar y borrar opción
+      - [x] Panel: botón Enviar, estado «Enviada», rechazar, precio mensual e IVA en la landing
+            — **desplegado** en `webiados/webiados` (Vercel) el 2026-07-31
       - [ ] Evaluar la landing del frontend vs. el PDF actual — **otro repo**, sin cerrar
       - [ ] Modalidad "sin mensualidad" y agregados B2B — siguen como texto libre
       - [ ] Plan de mantención de Macarena como dato (no es mensualidad de una opción)
