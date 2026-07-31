@@ -1,3 +1,17 @@
+> ## 📮 ANTES DE QUEDARTE ESPERANDO: reporta
+>
+> Todo trabajo se reporta en **`Demos-Webiados-Clientes/docs/reportes/<este-repo>.md`**.
+>
+> - **Entradas nuevas ARRIBA.** Máximo 15 líneas. Estado: 🟢 TERMINADO · 🟡 BLOQUEADO · 🔵 PREGUNTA.
+> - **Se reporta ANTES de quedarse esperando algo, no después.** Un modelo bloqueado en silencio
+>   es un modelo detenido que nadie sabe que está detenido.
+> - **Cuatro secciones, siempre:** qué hice · cómo lo verifiqué · qué necesito · hallazgos.
+> - **Sin secretos ni datos de personas** en el reporte.
+>
+> Y si tomas una decisión de fondo, cámbiala de plan o descubres que algo documentado era falso,
+> **escríbelo en este repo además del reporte**. Entró un socio nuevo: lo que no está escrito, para
+> él no existe. Contexto: `Demos-Webiados-Clientes/EMPIEZA_AQUI.md`.
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code when working with this repository.
@@ -110,7 +124,9 @@ Client tokens carry the `codigo` as a claim and every client endpoint verifies i
 the path — a valid token cannot read another client's quote.
 
 ### Email
-`EmailService` sends transactional mail via SMTP (Resend recommended). Two paths:
+`EmailService` sends transactional mail via SMTP. **Config y troubleshooting:
+[`docs/correo-smtp.md`](docs/correo-smtp.md)** (hoy: Gmail con App Password; Resend como plan B).
+Two paths:
 
 - `sendQuoteToClient` — sends the landing URL + `clave` **to the client**. Synchronous and
   propagates failures on purpose: a quote must never be marked `SENT` if the mail didn't go out.
