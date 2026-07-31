@@ -8,9 +8,12 @@
 ## Por qué este repo es P0
 
 Es una de las **cuatro máquinas construidas y apagadas**. Este servicio está **vivo y
-desplegado** (`cotiza.webiados.com`, Railway, último commit 2026-07-22) — y sin embargo las dos
-cotizaciones reales del mes, Macarena Larraín y la pastelería Vientos del Sur, **se escribieron
-a mano en Markdown y se exportaron a PDF**.
+desplegado** (`cotizaciones-api-production-e0fb.up.railway.app`, Railway; V4 desplegada
+2026-07-31) — y sin embargo las dos cotizaciones reales del mes, Macarena Larraín y la
+pastelería Vientos del Sur, **se escribieron a mano en Markdown y se exportaron a PDF**.
+
+> ⚠️ `cotiza.webiados.com` **no existe** (NXDOMAIN). El panel y la landing viven en
+> `webiados.com` (`/admin` y `/cotizacion/{codigo}`), frontend Angular en `Pipedsl/webiados`.
 
 Eso significa tres cosas, todas malas: se pierde el historial comercial, se improvisan montos
 fuera de `pricing.md`, y no hay forma de saber cuántas cotizaciones se enviaron ni cuántas se
@@ -22,35 +25,34 @@ cerraron. Sin ese dato no se puede medir la meta de **🎯 10 conversaciones rea
 
 ## Qué hacer, en orden
 
-### 1. Cargar las cotizaciones reales que existen *(P0)*
+### 1. Cargar las cotizaciones reales que existen *(P0)* — ⏳ listo, espera a Felipe
 
-Meter en el sistema las que ya se enviaron, para que el historial arranque con datos de verdad:
+Payloads y script listos en `docs/carga-inicial/` (probados contra Postgres real). V4 ya está
+desplegada, así que los endpoints existen en producción. **Felipe corre `cargar.sh`** (el modelo
+no escribe en producción ni recibe credenciales). Estados en el modelo V4:
 
 | Cliente | Estado | Dónde está el original |
 |---|---|---|
-| Macarena Larraín — Opción C, $380.000 + IVA | `ACCEPTED` | `../Demos-Webiados-Clientes/docs/Cotizaciones/` |
-| Pastelería Vientos del Sur — 3 opciones | `SENT` | `../Demos-Webiados-Clientes/docs/Cotizaciones/Cotizacion_Pasteleria_VientosdelSur.md` |
+| Macarena Larraín — Opción C, $380.000 + IVA | `SELECTED` | `../Demos-Webiados-Clientes/docs/Cotizaciones/` |
+| Pastelería Vientos del Sur — 3 opciones (con mensualidad) | `SENT` | `../Demos-Webiados-Clientes/docs/Cotizaciones/Cotizacion_Pasteleria_VientosdelSur.md` |
 
 **Criterio de verificación:** entrar al panel y ver las dos, con su estado correcto.
 
-### 2. Que la próxima cotización nazca acá, no en Markdown *(P0)*
+### 2. Que la próxima cotización nazca acá, no en Markdown *(P0)* — ✅ backend listo, falta desplegar el panel
 
-Antes de agregar una sola función nueva, la próxima cotización que Felipe envíe tiene que salir
-de este sistema. Si algo lo impide, **ese impedimento es el trabajo** — no una excusa para
-volver al Markdown.
-
-Lo más probable: falta que el PDF/landing que genera se vea tan bien como el Markdown exportado.
-`V3__add_landing_fields.sql` ya agregó `titulo`, `mensaje` e `imagenes` para eso.
+El impedimento real **no** era la landing: era que el **panel no tenía botón de Enviar**. El
+backend ya envía (V4: `POST /{id}/send` manda link+clave al cliente y marca `SENT`; más
+`mark-sent`, `reject`, `precioMensual`). El **frontend** ya quedó enganchado en la rama
+`feat/panel-envio-cotizaciones-v4` de `Pipedsl/webiados` (Vercel) — **falta que Felipe autorice
+su deploy** (mergear a `main` = producción).
 
 **Criterio de verificación:** una cotización enviada a un cliente real desde el sistema.
 
 ### 3. Leer los precios de `pricing.md`, no tenerlos escritos acá *(P1)*
 
 Regla dura de Webiados: **los precios se leen de `pricing.md`** vía `GET /api/v1/pricing` del
-Core. Hoy las `Selection` viven en la base de este servicio: se van a desincronizar.
-
-- Sincronizar `Selection` contra el endpoint de precios del Core, o
-- documentar explícitamente por qué no se puede y cómo se mantienen alineados.
+Core. **Replanteado** — ver `docs/SPRINT2_PRECIOS.md`: `Selection` es una bitácora, no un
+catálogo; la entidad correcta es un `PriceItem` read-through del endpoint del Core.
 
 **Nunca hardcodear un monto ni improvisarlo en una reunión.**
 
