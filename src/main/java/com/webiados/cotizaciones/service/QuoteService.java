@@ -62,8 +62,10 @@ public class QuoteService {
         }
         Instant expiresAt = createdAt.plus(props.quote().validityDays(), ChronoUnit.DAYS);
 
+        // Normalizamos el nombre al guardar (no al mostrar), para que salga bien en el correo,
+        // en la landing y en el panel a la vez. "felipe" → "Felipe".
         var quote = new Quote(UUID.randomUUID(), codigo, claveHash, clave,
-                req.clientName(), req.clientEmail(), req.notes(), createdAt, expiresAt,
+                Formatos.nombre(req.clientName()), req.clientEmail(), req.notes(), createdAt, expiresAt,
                 req.titulo(), req.mensaje(), req.imagenes());
 
         int index = 0;

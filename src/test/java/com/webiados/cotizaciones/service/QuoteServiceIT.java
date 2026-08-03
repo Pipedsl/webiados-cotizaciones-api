@@ -14,9 +14,12 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import jakarta.mail.Session;
+import jakarta.mail.internet.MimeMessage;
 import org.springframework.mail.MailSendException;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+
+import java.util.Properties;
 import org.springframework.test.context.TestPropertySource;
 
 import javax.sql.DataSource;
@@ -29,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * Integración real: Spring completo, Flyway y Postgres embebido.
@@ -105,18 +109,19 @@ class QuoteServiceIT {
     @DisplayName("enviarla la deja SENT, con fecha, y le manda el correo al cliente")
     void enviarMandaCorreoAlCliente() {
         var creada = quoteService.create(cotizacion("cliente@ejemplo.cl"));
+        when(mailSender.createMimeMessage()).thenReturn(freshMime());
 
         var detalle = quoteService.send(creada.id());
 
         assertThat(detalle.status()).isEqualTo(QuoteStatus.SENT);
         assertThat(detalle.sentAt()).isNotNull();
+        // El contenido del correo (botón, código, clave, vigencia) se verifica en EmailContentTest.
+        verify(mailSender).send(any(MimeMessage.class));
+    }
 
-        var mensaje = org.mockito.ArgumentCaptor.forClass(SimpleMailMessage.class);
-        verify(mailSender).send(mensaje.capture());
-        assertThat(mensaje.getValue().getTo()).containsExactly("cliente@ejemplo.cl");
-        assertThat(mensaje.getValue().getText())
-                .contains("https://webiados.com/cotizacion/" + creada.codigo())
-                .contains(creada.clave());
+    /** MimeMessage vacío pero real, para que MimeMessageHelper pueda poblarlo en el mock. */
+    private MimeMessage freshMime() {
+        return new MimeMessage(Session.getInstance(new Properties()));
     }
 
     @Test
@@ -135,7 +140,8 @@ class QuoteServiceIT {
     @DisplayName("si el correo falla, la cotización NO queda como enviada")
     void correoFallidoNoMarcaSent() {
         var creada = quoteService.create(cotizacion("cliente@ejemplo.cl"));
-        doThrow(new MailSendException("SMTP caído")).when(mailSender).send(any(SimpleMailMessage.class));
+        when(mailSender.createMimeMessage()).thenReturn(freshMime());
+        doThrow(new MailSendException("SMTP caído")).when(mailSender).send(any(MimeMessage.class));
 
         assertThatThrownBy(() -> quoteService.send(creada.id()))
                 .isInstanceOf(MailSendException.class);
@@ -149,6 +155,7 @@ class QuoteServiceIT {
     @DisplayName("rechazar la deja REJECTED con fecha")
     void rechazar() {
         var creada = quoteService.create(cotizacion("cliente@ejemplo.cl"));
+        when(mailSender.createMimeMessage()).thenReturn(freshMime());
         quoteService.send(creada.id());
 
         var detalle = quoteService.reject(creada.id());
