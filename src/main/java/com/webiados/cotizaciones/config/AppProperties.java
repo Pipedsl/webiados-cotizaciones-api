@@ -10,8 +10,20 @@ public record AppProperties(
         Quote quote,
         Mail mail,
         Cors cors,
-        Ratelimit ratelimit
+        Ratelimit ratelimit,
+        Pricing pricing
 ) {
+    /**
+     * Catálogo de precios del Core. La fuente de verdad es `pricing.md`; el Core la publica ya
+     * calculada (UF, neto, con IVA y USD del día). Este servicio la <strong>consume verbatim</strong>:
+     * no convierte nada, para no diferir en un peso con lo que muestra el sitio.
+     *
+     * @param url      endpoint del Core, p.ej. https://core.webiados.com/api/v1/pricing
+     * @param timeoutSeconds tope de espera; si el Core no responde se sirve el último cacheado
+     */
+    public record Pricing(String url, int timeoutSeconds) {
+    }
+
     public record Admin(String bootstrapEmail, String bootstrapPassword) {
     }
 

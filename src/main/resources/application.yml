@@ -62,6 +62,10 @@ app:
   ratelimit:
     unlock-max-attempts: ${RATELIMIT_UNLOCK_MAX:5}
     unlock-window-minutes: ${RATELIMIT_UNLOCK_WINDOW:10}
+  pricing:
+    # Catálogo del Core (fuente de verdad: pricing.md). Se consume verbatim, sin convertir.
+    url: ${PRICING_URL:https://core.webiados.com/api/v1/pricing}
+    timeout-seconds: ${PRICING_TIMEOUT_SECONDS:5}
 
 management:
   endpoints:
