@@ -2,11 +2,13 @@ package com.webiados.cotizaciones.web;
 
 import com.webiados.cotizaciones.dto.admin.CreateQuoteRequest;
 import com.webiados.cotizaciones.dto.admin.CreateQuoteResponse;
+import com.webiados.cotizaciones.dto.admin.FromLeadRequest;
 import com.webiados.cotizaciones.dto.admin.MarkSentRequest;
 import com.webiados.cotizaciones.dto.admin.OptionRequest;
 import com.webiados.cotizaciones.dto.admin.QuoteAdminDetail;
 import com.webiados.cotizaciones.dto.admin.QuoteAdminSummary;
 import com.webiados.cotizaciones.dto.admin.UpdateQuoteRequest;
+import com.webiados.cotizaciones.service.LeadService;
 import com.webiados.cotizaciones.service.QuoteService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -32,14 +34,25 @@ import java.util.UUID;
 public class AdminQuoteController {
 
     private final QuoteService quoteService;
+    private final LeadService leadService;
 
-    public AdminQuoteController(QuoteService quoteService) {
+    public AdminQuoteController(QuoteService quoteService, LeadService leadService) {
         this.quoteService = quoteService;
+        this.leadService = leadService;
     }
 
     @PostMapping
     public ResponseEntity<CreateQuoteResponse> create(@Valid @RequestBody CreateQuoteRequest req) {
         return ResponseEntity.ok(quoteService.create(req));
+    }
+
+    /**
+     * Crea un <strong>borrador</strong> de cotización a partir de un lead del CRM del Core, sin
+     * retipear los datos. Nace en PENDING y sin opciones; el vendedor las agrega después.
+     */
+    @PostMapping("/from-lead")
+    public ResponseEntity<QuoteAdminDetail> fromLead(@Valid @RequestBody FromLeadRequest req) {
+        return ResponseEntity.ok(leadService.convertirABorrador(req.leadId()));
     }
 
     @GetMapping

@@ -68,9 +68,13 @@ public class QuoteService {
                 Formatos.nombre(req.clientName()), req.clientEmail(), req.notes(), createdAt, expiresAt,
                 req.titulo(), req.mensaje(), req.imagenes());
 
-        int index = 0;
-        for (OptionRequest optReq : req.options()) {
-            quote.addOption(newOption(optReq, index++));
+        // Un borrador nacido de un lead puede no traer opciones todavía; el vendedor las agrega
+        // después. `send` ya se niega a enviar una cotización sin opciones.
+        if (req.options() != null) {
+            int index = 0;
+            for (OptionRequest optReq : req.options()) {
+                quote.addOption(newOption(optReq, index++));
+            }
         }
 
         quoteRepo.save(quote);

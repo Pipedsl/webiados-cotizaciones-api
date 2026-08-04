@@ -5,6 +5,7 @@ import com.webiados.cotizaciones.domain.QuoteStatus;
 import com.webiados.cotizaciones.dto.admin.CreateQuoteRequest;
 import com.webiados.cotizaciones.dto.admin.OptionRequest;
 import com.webiados.cotizaciones.dto.admin.UpdateQuoteRequest;
+import com.webiados.cotizaciones.dto.lead.Lead;
 import com.webiados.cotizaciones.repo.QuoteRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -65,6 +66,16 @@ class QuoteServiceIT {
 
     @MockBean
     JavaMailSender mailSender;
+
+    @MockBean
+    LeadClient leadClient;
+
+    @Autowired
+    LeadService leadService;
+
+    private static CreateQuoteRequest borradorSinOpciones() {
+        return new CreateQuoteRequest("Nuevo Lead", "lead@ejemplo.cl", null, null, null, null, null, null);
+    }
 
     private static OptionRequest opcion(String titulo, long precio, Long mensual) {
         return new OptionRequest(titulo, "descripción", BigDecimal.valueOf(precio),
@@ -163,6 +174,45 @@ class QuoteServiceIT {
         assertThat(detalle.status()).isEqualTo(QuoteStatus.REJECTED);
         assertThat(detalle.rejectedAt()).isNotNull();
         assertThat(detalle.sentAt()).as("sigue contando como enviada").isNotNull();
+    }
+
+    @Test
+    @DisplayName("un borrador (lead sin opciones) nace PENDING y sin opciones")
+    void crearBorradorSinOpciones() {
+        var creada = quoteService.create(borradorSinOpciones());
+
+        var d = quoteService.getDetail(creada.id());
+        assertThat(d.status()).isEqualTo(QuoteStatus.PENDING);
+        assertThat(d.options()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("un borrador sin opciones no se puede enviar")
+    void noSeEnviaBorradorSinOpciones() {
+        var creada = quoteService.create(borradorSinOpciones());
+
+        assertThatThrownBy(() -> quoteService.send(creada.id()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("opciones");
+    }
+
+    @Test
+    @DisplayName("convertir un lead del Core crea un borrador con los datos ya puestos")
+    void convertirLeadABorrador() {
+        var lead = new Lead(7L, "maría pérez", "maria@ejemplo.cl", "+56912345678",
+                "Quiero una tienda online", null, "formulario", "nuevo");
+        when(leadClient.find(7L)).thenReturn(lead);
+
+        var d = leadService.convertirABorrador(7L);
+
+        assertThat(d.clientName()).as("el nombre se normaliza al guardar").isEqualTo("María Pérez");
+        assertThat(d.clientEmail()).isEqualTo("maria@ejemplo.cl");
+        assertThat(d.status()).isEqualTo(QuoteStatus.PENDING);
+        assertThat(d.options()).as("un lead todavía no tiene opciones").isEmpty();
+        assertThat(d.notes())
+                .contains("Lead del CRM")
+                .contains("Quiero una tienda online")
+                .contains("+56912345678");
     }
 
     @Test

@@ -154,6 +154,9 @@
                     -->
                     <systemPropertyVariables>
                         <app.jwt.secret>test-secret-solo-para-el-build-no-usar-en-produccion-0123456789</app.jwt.secret>
+                        <!-- La máquina corre Java 25; Byte Buddy (Mockito) aún no lo soporta oficialmente.
+                             Necesario para @MockBean de clases concretas (p.ej. LeadClient). -->
+                        <net.bytebuddy.experimental>true</net.bytebuddy.experimental>
                     </systemPropertyVariables>
                 </configuration>
             </plugin>

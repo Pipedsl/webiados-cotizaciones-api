@@ -66,6 +66,13 @@ app:
     # Catálogo del Core (fuente de verdad: pricing.md). Se consume verbatim, sin convertir.
     url: ${PRICING_URL:https://core.webiados.com/api/v1/pricing}
     timeout-seconds: ${PRICING_TIMEOUT_SECONDS:5}
+  leads:
+    # CRM del Core. El formulario postea al Core; acá se LEE un lead al convertirlo en cotización.
+    url: ${LEADS_URL:https://core.webiados.com/api/v1/leads}
+    # Llave de tenant del Core (Bearer). Sin default: si falta, convertir un lead falla con aviso;
+    # el servicio arranca igual (la conversión de leads es opcional).
+    api-key: ${CORE_API_KEY:}
+    timeout-seconds: ${LEADS_TIMEOUT_SECONDS:5}
 
 management:
   endpoints:

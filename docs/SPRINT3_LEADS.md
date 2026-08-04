@@ -1,38 +1,40 @@
-# Sprint 3 — Recibir los leads del outbound (diseño, pendiente de decisión)
+# Sprint 3 — Recibir los leads del outbound
 
-> Escrito el 2026-08-03. Contexto: [`SIGUIENTE.md`](../SIGUIENTE.md) §4, [`TASKLIST.md`](../TASKLIST.md).
-> **No implementado a propósito:** toca el flujo de creación (load-bearing) y depende de un
-> contrato que decide Felipe. Este doc deja el diseño listo para aprobar, no código especulativo.
+> Diseño: 2026-08-03. **Contrato decidido por Felipe: 2026-08-04.** Backend implementado el
+> 2026-08-04 (en rama, sin desplegar). Contexto: [`SIGUIENTE.md`](../SIGUIENTE.md) §4.
 
 ## DoD
-Un lead que responde se convierte en `Quote` **sin retipear los datos**. El formulario público de
-`webiados.com` termina acá.
+Un lead que responde se convierte en `Quote` **sin retipear los datos**.
 
-## El bloqueo real (hallazgo)
-Hoy `CreateQuoteRequest.options` es `@NotEmpty`: **una cotización no puede existir sin al menos una
-opción**. Un lead no trae opciones ni precios — trae contacto y contexto. Así que "lead → Quote"
-exige poder crear un **borrador** de cotización solo con los datos del cliente, que el admin
-completa después (ahora con los precios del catálogo del Core, ya integrado en §3).
+## Contrato (decidido)
+1. **El formulario público de `webiados.com` postea al CORE**, no a este servicio. El CRM vive en
+   el Core (`webiados/Demos-Webiados-Clientes`), ya funcionando en producción.
+2. **Este servicio LEE** un lead del Core cuando el admin lo convierte en cotización. Usa los
+   **campos del CRM del Core** (sin esquema paralelo).
+3. **Se acepta el borrador sin opciones:** un lead todavía no tiene opciones ni precios; el
+   vendedor los agrega después (con el catálogo del Core, §3).
 
-## Propuesta
-1. **Estado borrador.** Permitir crear un `Quote` en `PENDING` **sin opciones**, con nombre, correo
-   y contexto (rubro/notas). El admin le agrega opciones con `POST /{id}/options` (ya existe) y
-   recién ahí la envía. No se puede *enviar* una cotización sin opciones (validar en `send`).
-2. **Endpoint de ingreso:** `POST /api/admin/quotes/from-lead` con `{ clientName, clientEmail,
-   rubro?, notas?, origen? }`. Mapea el lead a un borrador y devuelve su `id` para editarlo.
-3. **El nombre se normaliza** al guardar (ya lo hace `Formatos.nombre`), así el borrador ya sale
-   bien en panel y correo.
+## Cómo es el endpoint del Core (verificado en su repo)
+- `GET https://core.webiados.com/api/v1/leads` → `{ docs, total, page, totalPages }`, filtros
+  `estado` / `origen` / `limit`. **Auth:** `Authorization: Bearer wcore_live_<llave>` — el tenant
+  sale de la llave. **No hay "traer por id"** (solo la lista), así que se busca en los recientes.
+- Campos del lead: `id, nombre, email, telefono, mensaje, interes (json), origen, estado`.
 
-## Decisiones que necesita Felipe (no las tomo yo)
-- **¿Quién hace el POST?** ¿El formulario de `webiados.com` pega directo a este servicio, o pasa
-  por el Core / `buscadorLeads`? Eso define **auth**: hoy todo `/api/admin/**` pide JWT de admin;
-  un formulario público necesitaría otra puerta (token de servicio, o un endpoint público acotado
-  con rate-limit, distinto del admin).
-- **¿Qué campos trae el lead?** `buscadorLeads` es un proyecto Python aparte con datos personales;
-  no inventé su esquema. Hay que fijar el set mínimo ({nombre, correo, rubro, teléfono?}).
-- **¿Se acepta el borrador sin opciones?** Es el cambio de fondo (relaja `@NotEmpty`). Si no se
-  quiere tocar eso, la alternativa es crear el borrador con una opción placeholder — más feo.
+## Lo que se implementó (backend, este repo)
+- **Borradores:** `CreateQuoteRequest.options` dejó de ser `@NotEmpty`; `create` tolera sin
+  opciones; `send` ya se niega a enviar una cotización sin opciones.
+- **`LeadClient`:** lee `GET /api/v1/leads` con la llave (Bearer). No cachea (un lead es dato
+  vivo). Si falta `CORE_API_KEY`, falla con un mensaje claro; el servicio arranca igual.
+- **`GET /api/admin/leads`** (lista para el panel) y **`POST /api/admin/quotes/from-lead`**
+  `{ leadId }` → crea el borrador (nombre normalizado, correo, y el contexto del lead —mensaje,
+  teléfono, interés— en las notas internas).
+- **Config:** `LEADS_URL`, `CORE_API_KEY`, `LEADS_TIMEOUT_SECONDS`.
+- **Verificado:** pruebas con un Core simulado en proceso (parseo, header Bearer, find-by-id),
+  más borrador PENDING sin opciones y la conversión mapeando los campos.
 
-## Verificación (cuando se apruebe)
-Un lead entra por el endpoint → aparece un borrador en el panel con los datos ya puestos → el admin
-agrega opciones del catálogo y lo envía, sin haber retipeado nombre ni correo.
+## Lo que falta
+- 🚧 **NECESITA A FELIPE:** poner `CORE_API_KEY` (la llave de tenant del Core) en Railway. Sin
+  ella la conversión no funciona en producción; el resto del servicio sí.
+- **Frontend** (`webiados/webiados`): listar leads y el botón "convertir a cotización". Otro repo.
+- **Limitación:** el Core no expone lead por id; se busca entre los ~200 recientes. Si molesta,
+  conviene agregar `GET /api/v1/leads/:id` en el Core.

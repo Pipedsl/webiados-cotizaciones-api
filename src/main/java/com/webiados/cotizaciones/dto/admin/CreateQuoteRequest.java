@@ -2,7 +2,6 @@ package com.webiados.cotizaciones.dto.admin;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 
 import java.time.Instant;
 import java.util.List;
@@ -12,6 +11,10 @@ import java.util.List;
  *                  se informa solo para cargar cotizaciones históricas con su fecha
  *                  verdadera. Sin esto el histórico nace fechado el día de la migración y
  *                  la tasa de cierre por período queda mal.
+ * @param options   opciones de la cotización. Puede venir <strong>vacía o nula</strong>: una
+ *                  cotización nacida de un lead es un borrador que todavía no tiene opciones ni
+ *                  precios; el vendedor las agrega después. No se puede <em>enviar</em> un
+ *                  borrador sin opciones (eso lo valida {@code QuoteService.send}).
  */
 public record CreateQuoteRequest(
         @NotBlank String clientName,
@@ -21,6 +24,6 @@ public record CreateQuoteRequest(
         String mensaje,
         String imagenes,
         Instant createdAt,
-        @NotEmpty @Valid List<OptionRequest> options
+        @Valid List<OptionRequest> options
 ) {
 }
