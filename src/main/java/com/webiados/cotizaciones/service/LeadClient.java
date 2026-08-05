@@ -12,10 +12,10 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.Duration;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 /**
- * Lee leads del CRM del Core ({@code GET /api/v1/leads}) con la llave de tenant. El formulario
+ * Lee leads del CRM del Core ({@code GET /api/v1/leads} para la lista, {@code GET /api/v1/leads/{id}}
+ * para uno puntual) con la llave de tenant. El tenant sale de la llave, nunca de la URL. El formulario
  * público NO llega acá: postea al Core. Este servicio solo lee un lead para convertirlo en un
  * borrador de cotización, con los campos del CRM (sin esquema paralelo).
  *
@@ -35,7 +35,9 @@ public class LeadClient {
 
     /** Para pruebas: URL de un Core simulado, una llave cualquiera, y un RestClient sin timeouts. */
     LeadClient(String url, String apiKey, RestClient http) {
-        this.url = url;
+        // Sin barra final: `find` le pega el id como último segmento y una barra de más en la
+        // config se convertiría en `/leads//7`.
+        this.url = url == null ? null : url.replaceAll("/+$", "");
         this.apiKey = apiKey;
         this.http = http;
     }
@@ -65,15 +67,41 @@ public class LeadClient {
     }
 
     /**
-     * Un lead por id. El endpoint del Core no tiene "traer por id", así que se busca entre los
-     * leads recientes; si el admin lo eligió de la lista, está ahí.
+     * Un lead por id, contra {@code GET /api/v1/leads/{id}} del Core.
+     *
+     * <p>Antes esto listaba los 200 leads más recientes y filtraba en memoria, porque el Core no
+     * tenía cómo pedir uno puntual. Era una bomba de tiempo con fecha de detonación proporcional al
+     * éxito comercial: pasado el lead número 200 —el formulario, el bot de WhatsApp y las demos
+     * suman— cualquier prospecto de hace unos días dejaba de ser convertible.
+     *
+     * @throws LeadNoEncontradoException si el Core responde 404 (no existe, o es de otro tenant:
+     *                                   el Core no distingue los dos casos y acá tampoco se asume).
+     * @throws IllegalStateException     si falta la llave o el Core no responde bien.
      */
     public Lead find(long leadId) {
-        return list(null, 200).docs().stream()
-                .filter(l -> l.id() != null && l.id() == leadId)
-                .findFirst()
-                .orElseThrow(() -> new NoSuchElementException(
-                        "El lead " + leadId + " no está entre los leads recientes del Core"));
+        requireApiKey();
+        String uri = UriComponentsBuilder.fromUriString(url)
+                .pathSegment(Long.toString(leadId))
+                .build().toUriString();
+        Lead lead;
+        try {
+            lead = http.get().uri(uri)
+                    .header("Authorization", "Bearer " + apiKey)
+                    .retrieve()
+                    .onStatus(status -> status.value() == 404, (req, res) -> {
+                        throw new LeadNoEncontradoException(leadId);
+                    })
+                    .body(Lead.class);
+        } catch (LeadNoEncontradoException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            // Cualquier otro fallo (red, 500, JSON ilegible) NO es "el lead no existe": decirlo así
+            // mandaría al vendedor a buscar un lead que sí está.
+            throw new IllegalStateException(
+                    "No se pudo leer el lead " + leadId + " del Core: " + ex.getMessage(), ex);
+        }
+        if (lead == null) throw new LeadNoEncontradoException(leadId);
+        return lead;
     }
 
     private void requireApiKey() {
