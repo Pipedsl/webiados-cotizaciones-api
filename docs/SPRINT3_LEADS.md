@@ -36,5 +36,7 @@ Un lead que responde se convierte en `Quote` **sin retipear los datos**.
 - 🚧 **NECESITA A FELIPE:** poner `CORE_API_KEY` (la llave de tenant del Core) en Railway. Sin
   ella la conversión no funciona en producción; el resto del servicio sí.
 - **Frontend** (`webiados/webiados`): listar leads y el botón "convertir a cotización". Otro repo.
-- **Limitación:** el Core no expone lead por id; se busca entre los ~200 recientes. Si molesta,
-  conviene agregar `GET /api/v1/leads/:id` en el Core.
+- ~~**Limitación:** el Core no expone lead por id; se busca entre los ~200 recientes.~~
+  **Resuelto el 2026-08-05.** El Core ya expone `GET /api/v1/leads/:id` (misma llave Bearer; 404
+  `problem+json` si no existe *o* es de otro tenant, sin distinguir los dos casos a propósito) y
+  `LeadClient.find` lo usa. Se acabó el techo de 200 leads.
