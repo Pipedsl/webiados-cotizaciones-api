@@ -21,6 +21,9 @@ public record PricingCatalog(
         BigDecimal mantencionLanding,
         Monto mantencionLandingMonto,
         List<ItemPrecio> kits,
-        List<ItemPrecio> addons
+        List<ItemPrecio> addons,
+        List<ItemPrecio> identidad,
+        List<ItemPrecioSimple> piezas,
+        List<ItemPrecioSimple> horas
 ) {
 }

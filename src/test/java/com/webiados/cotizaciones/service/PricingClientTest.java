@@ -32,6 +32,20 @@ class PricingClientTest {
                 {"slug":"agenda","etiqueta":"Módulo de reservas","setup":250000,"mensual":15000,
                  "setupMonto":{"uf":6.1207,"neto":250000,"conIva":297500,"usd":320},
                  "mensualMonto":{"uf":0.3672,"neto":15000,"conIva":17850,"usd":19}}
+              ],
+              "identidad":[
+                {"nombre":"Logo","setup":180000,"mensual":0,
+                 "setupMonto":{"uf":4.4069,"neto":180000,"conIva":214200,"usd":234},
+                 "mensualMonto":{"uf":0,"neto":0,"conIva":0,"usd":0},
+                 "primerAnioMonto":{"uf":4.4069,"neto":180000,"conIva":214200,"usd":234}}
+              ],
+              "piezas":[
+                {"nombre":"Set de íconos personalizados (hasta 8)","precio":120000,
+                 "precioMonto":{"uf":2.938,"neto":120000,"conIva":142800,"usd":156}}
+              ],
+              "horas":[
+                {"nombre":"Hora de desarrollo","precio":35000,
+                 "precioMonto":{"uf":0.8569,"neto":35000,"conIva":41650,"usd":46}}
               ]
             }
             """;
@@ -104,5 +118,31 @@ class PricingClientTest {
         assertThatThrownBy(client::get)
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("No se inventa");
+    }
+
+    @Test
+    void expone_identidad_piezas_y_horas() throws IOException {
+        HttpServer core = startCore(CATALOGO);
+        try {
+            var client = new PricingClient(urlOf(core), RestClient.create());
+
+            PricingCatalog cat = client.get();
+
+            // identidad reusa ItemPrecio (nombre + setup)
+            assertThat(cat.identidad()).hasSize(1);
+            assertThat(cat.identidad().get(0).nombre()).isEqualTo("Logo");
+            assertThat(cat.identidad().get(0).setupMonto().conIva()).isEqualByComparingTo("214200");
+
+            // piezas/horas: precio suelto, sin setup/mensual
+            assertThat(cat.piezas()).hasSize(1);
+            assertThat(cat.piezas().get(0).nombre()).isEqualTo("Set de íconos personalizados (hasta 8)");
+            assertThat(cat.piezas().get(0).precio()).isEqualByComparingTo("120000");
+            assertThat(cat.piezas().get(0).precioMonto().conIva()).isEqualByComparingTo("142800");
+
+            assertThat(cat.horas()).hasSize(1);
+            assertThat(cat.horas().get(0).precioMonto().neto()).isEqualByComparingTo("35000");
+        } finally {
+            core.stop(0);
+        }
     }
 }

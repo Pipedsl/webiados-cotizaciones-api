@@ -10,6 +10,10 @@ cotización es el mismo que muestra el sitio, sin diferencias.
 - **En este servicio** se lee en `GET /api/admin/pricing` (con token de admin), para que el panel
   arme opciones eligiendo un ítem con el monto ya puesto. (El "elegir ítem" en el panel es frontend
   pendiente; hoy existe el endpoint que lo va a alimentar.)
+- **El catálogo trae seis categorías:** `landings`, `kits`, `addons`, `identidad`, `piezas` y
+  `horas`. Las tres primeras y `identidad` traen ítems con `setup` + `mensual` (instalación +
+  mensualidad, con su `primerAnioMonto`); `piezas` y `horas` son de **precio suelto** — un solo
+  monto, pago único, sin setup ni mensualidad.
 
 ## Cómo se prende / apaga
 Viene configurado por defecto (`PRICING_URL` apunta al Core). No hay que prender nada.
